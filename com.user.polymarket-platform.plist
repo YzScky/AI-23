@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Polymarket 平台守护进程（第 6 步模板）：登录后自动跑 start.command，退出后自动重启。
+     只是一个模板，不会自动安装。路径按 Mac 上的实际安装位置改（默认 /Users/qinzimu/Downloads/polymarket-platform）。
+     注意：start.command 每轮跑 600 秒（10 分钟）后正常退出，KeepAlive 会立刻再拉起一轮，
+     所以实际效果是 10 分钟一轮、不间断地跑。想改单轮时长，改 start.command 里的 duration 参数。-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.user.polymarket-platform</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/qinzimu/Downloads/polymarket-platform/start.command</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>/Users/qinzimu/Downloads/polymarket-platform</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/Users/qinzimu/Downloads/polymarket-platform/platform.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/qinzimu/Downloads/polymarket-platform/platform.log</string>
+</dict>
+</plist>

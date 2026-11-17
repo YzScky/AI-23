@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polymarket 平台看板（纸面模式）</title>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --bg-soft: #0e121b;
+    --card: #141926;
+    --card-2: #1a2132;
+    --border: #232c40;
+    --border-soft: #1c2436;
+    --text: #e6eaf2;
+    --text-2: #9aa5b8;
+    --text-3: #6b7689;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --green: #34d399;
+    --green-bg: rgba(52, 211, 153, .13);
+    --green-text: #6ee7b7;
+    --red: #f87171;
+    --red-bg: rgba(248, 113, 113, .12);
+    --red-text: #fca5a5;
+    --amber: #fbbf24;
+    --amber-bg: rgba(251, 191, 36, .13);
+    --amber-text: #fcd34d;
+    --radius: 14px;
+    --shadow: 0 8px 24px rgba(0, 0, 0, .35);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.55;
+    background-image: radial-gradient(1000px 480px at 50% -180px, rgba(59, 130, 246, .14), transparent 70%);
+    background-repeat: no-repeat;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 20px 40px; }
+
+  /* ---- 顶栏 ---- */
+  header.topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 6px 2px 18px;
+  }
+  .title-block h1 {
+    font-size: 22px;
+    line-height: 1.25;
+    margin: 0 0 4px;
+    font-weight: 700;
+    letter-spacing: .2px;
+  }
+  .title-block h1 .mode {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--amber-text);
+    background: var(--amber-bg);
+    border: 1px solid rgba(251, 191, 36, .35);
+    border-radius: 999px;
+    padding: 2px 9px;
+    vertical-align: 3px;
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+  .sub { color: var(--text-2); font-size: 13px; }
+  .sub .dot { color: var(--text-3); margin: 0 6px; }
+
+  /* ---- 卡片 ---- */
+  .card {
+    background: linear-gradient(180deg, var(--card), var(--bg-soft));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .card h2 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .card-head .hint { color: var(--text-3); font-size: 12px; }
+  .card-note {
+    color: var(--text-2);
+    font-size: 12.5px;
+    margin: -6px 0 12px;
+  }
+
+  /* ---- 状态徽章 ---- */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 11px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.6;
+  }
+  .badge::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+  .badge.on { background: var(--green-bg); color: var(--green-text); }
+  .badge.on::before { box-shadow: 0 0 0 3px rgba(52, 211, 153, .18); }
+  .badge.off { background: var(--red-bg); color: var(--red-text); }
+
+  /* ---- 统计网格 ---- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+  }
+  .stat {
+    background: var(--card-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    padding: 12px 14px;
+    min-width: 0;
+  }
+  .stat .k { font-size: 12px; color: var(--text-2); margin-bottom: 5px; white-space: nowrap; }
+  .stat .v {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+    font-variant-numeric: tabular-nums;
+    word-break: break-word;
+  }
+  .stat .v .small { font-size: 12px; font-weight: 500; color: var(--text-2); }
+
+  /* ---- 按钮 ---- */
+  .actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .actions .note { color: var(--text-3); font-size: 12.5px; margin-left: 2px; }
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 9px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--card-2);
+    color: var(--text);
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, transform .05s ease;
+  }
+  button:hover:not(:disabled) { background: #222b40; border-color: #33405c; }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+  button.danger { background: transparent; color: var(--red-text); border-color: rgba(248, 113, 113, .55); }
+  button.danger:hover:not(:disabled) { background: var(--red-bg); border-color: var(--red); }
+  button:disabled { opacity: .45; cursor: default; }
+
+  /* ---- 输入框 ---- */
+  .bt-form { display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap; }
+  .bt-field { display: inline-flex; align-items: center; gap: 6px; }
+  label { font-size: 13px; color: var(--text-2); white-space: nowrap; }
+  input {
+    font-family: inherit;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    width: 96px;
+    background: var(--card-2);
+    transition: border-color .15s ease;
+  }
+  input:hover { border-color: #33405c; }
+  input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, .25); }
+
+  /* ---- 表格 ---- */
+  .table-wrap { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td {
+    text-align: left;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border-soft);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  th {
+    color: var(--text-2);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    background: var(--card);
+  }
+  td:first-child { white-space: normal; min-width: 220px; font-weight: 500; }
+  tbody tr { transition: background .12s ease; }
+  tbody tr:hover { background: rgba(255, 255, 255, .03); }
+  tbody tr:last-child td { border-bottom: none; }
+  tr.arb td {
+    background: var(--amber-bg);
+    font-weight: 600;
+  }
+  tr.arb td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+  tr.arb:hover td { background: rgba(251, 191, 36, .18); }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--amber);
+    color: #1a1200;
+    border-radius: 5px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    vertical-align: 1px;
+    white-space: nowrap;
+  }
+
+  /* ---- 回测结果 ---- */
+  #btResult { font-size: 13.5px; line-height: 1.7; }
+  #btResult table { width: auto; max-width: 100%; }
+  #btResult table td { border-bottom: 1px solid var(--border-soft); padding: 6px 14px 6px 0; white-space: normal; }
+  #btResult table td:first-child { color: var(--text-2); width: 170px; white-space: nowrap; }
+  #btResult table td:last-child { font-variant-numeric: tabular-nums; font-weight: 600; }
+  #btResult table tr:last-child td { border-bottom: none; }
+  #btResult .muted { margin-top: 8px; display: block; }
+
+  /* ---- 日志 ---- */
+  pre {
+    background: #0a0d13;
+    border: 1px solid var(--border-soft);
+    color: #c9d1e0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-family: ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow: auto;
+    max-height: 280px;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .muted { color: var(--text-3); font-size: 12.5px; }
+  .err { color: var(--red-text); font-size: 13px; }
+  #platformMsg { margin-top: 10px; min-height: 18px; }
+
+  /* ---- 响应式 ---- */
+  @media (max-width: 1080px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 14px 12px 28px; }
+    .card { padding: 14px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat .v { font-size: 16px; }
+    header.topbar { padding-bottom: 12px; }
+    .title-block h1 { font-size: 19px; }
+    input { width: 84px; }
+    th, td { padding: 8px 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="title-block">
+      <h1>Polymarket 平台看板<span class="mode">纸面模式</span></h1>
+      <div class="sub">只观察 · 不下单<span class="dot">·</span>看板只限本机访问（127.0.0.1）</div>
+    </div>
+    <span id="runBadge" class="badge off">未运行</span>
+  </header>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>运行状态 <span class="muted" id="pidLine"></span></h2>
+      <span class="hint">轮询 5 秒 · 20 个市场 · 数据写入 history.db</span>
+    </div>
+    <div class="grid">
+      <div class="stat"><div class="k">更新速度</div><div class="v" id="ups">—</div></div>
+      <div class="stat"><div class="k">虚拟资金</div><div class="v" id="cash">—</div></div>
+      <div class="stat"><div class="k">当日亏损 / 上限</div><div class="v" id="loss">—</div></div>
+      <div class="stat"><div class="k">交易数（纸面）</div><div class="v" id="trades">—</div></div>
+      <div class="stat"><div class="k">最好买两边</div><div class="v" id="bestBuy">—</div></div>
+      <div class="stat"><div class="k">最好卖两边</div><div class="v" id="bestSell">—</div></div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="btnStart" onclick="startPlatform()">启动平台</button>
+      <button class="danger" id="btnStop" onclick="stopPlatform()">停止平台</button>
+      <button onclick="refreshAll()">刷新</button>
+      <span class="note">启动后跑 1 小时，约 10 秒后出第一行心跳</span>
+    </div>
+    <div class="muted" id="platformMsg"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>市场盘口</h2>
+      <span class="hint" id="dbLine"></span>
+    </div>
+    <div class="card-note">买两边 ≤ 0.99 或卖两边 ≥ 1.01 的行会高亮（触发阈值，出现不代表一定能成交）</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>市场</th><th>A 买 / 卖</th><th>B 买 / 卖</th><th>买两边</th><th>卖两边</th></tr></thead>
+        <tbody id="marketRows"><tr><td colspan="5" class="muted">加载中……</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>回测</h2>
+      <span class="hint">重放 history.db · 5 秒快照分辨率的近似，不是 tick 级</span>
+    </div>
+    <div class="bt-form">
+      <span class="bt-field"><label>买 ≤</label><input id="buyT" type="number" step="0.01" value="0.99"></span>
+      <span class="bt-field"><label>卖 ≥</label><input id="sellT" type="number" step="0.01" value="1.01"></span>
+      <span class="bt-field"><label>每对</label><input id="size" type="number" step="10" value="200"></span>
+      <span class="bt-field"><label>总资金</label><input id="bankroll" type="number" step="100" value="1000"></span>
+      <span class="bt-field"><label>日亏上限</label><input id="cap" type="number" step="10" value="100"></span>
+      <button class="primary" id="btnBt" onclick="runBacktest()">跑回测</button>
+    </div>
+    <div id="btResult" style="margin-top:14px"><span class="muted">还没跑过回测。回测是 5 秒快照分辨率的近似，不是 tick 级。</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>运行日志</h2>
+      <span class="hint">最近 100 行</span>
+    </div>
+    <pre id="logView">加载中……</pre>
+  </div>
+</div>
+
+<script>
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+function num(v, d) { return (v == null || v === "") ? d : v; }
+
+async function api(path, method, body) {
+  const r = await fetch(path, {
+    method: method || "GET",
+    headers: {"Content-Type": "application/json"},
+    body: body ? JSON.stringify(body) : undefined
+  });
+  return r.json();
+}
+
+function renderStatus(d) {
+  const badge = document.getElementById("runBadge");
+  badge.textContent = d.running ? "运行中" : "未运行";
+  badge.className = "badge " + (d.running ? "on" : "off");
+  document.getElementById("pidLine").textContent = d.pid ? "PID " + d.pid : "";
+  const hb = d.hb;
+  document.getElementById("ups").textContent = hb ? hb.updates_per_s + " /秒（累计 " + hb.updates + "）" : "—";
+  document.getElementById("cash").textContent = hb ? hb.cash + " U" : "—";
+  document.getElementById("loss").textContent = hb ? hb.daily_loss + " / 100 U" : "—";
+  document.getElementById("trades").textContent = hb ? hb.trades : "—";
+  document.getElementById("bestBuy").textContent = hb && hb.best_buy != null ? hb.best_buy + "（" + (hb.best_buy_market || "") + "）" : "—";
+  document.getElementById("bestSell").textContent = hb && hb.best_sell != null ? hb.best_sell + "（" + (hb.best_sell_market || "") + "）" : "—";
+  const db = d.db || {};
+  document.getElementById("dbLine").textContent = db.exists
+    ? "history.db：盘口 " + db.books + " 行，成交 " + db.trades + " 行（" + db.size_kb + " KB）"
+    : "history.db 不存在：先启动平台攒数据";
+  const rows = d.markets || [];
+  const tb = document.getElementById("marketRows");
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="5" class="muted">暂无市场数据（DB 为空或不存在）</td></tr>';
+  } else {
+    tb.innerHTML = rows.map(function (m) {
+      const arb = m.arb ? '<span class="tag">触发</span>' : "";
+      return "<tr" + (m.arb ? ' class="arb"' : "") + "><td>" + esc(m.question) + arb + "</td>"
+        + "<td>" + num(m.a_bid, "—") + " / " + num(m.a_ask, "—") + "</td>"
+        + "<td>" + num(m.b_bid, "—") + " / " + num(m.b_ask, "—") + "</td>"
+        + "<td>" + num(m.buy_both, "—") + "</td>"
+        + "<td>" + num(m.sell_both, "—") + "</td></tr>";
+    }).join("");
+  }
+}
+
+async function refreshAll() {
+  try {
+    const d = await api("/api/status");
+    renderStatus(d);
+    const l = await api("/api/logs");
+    document.getElementById("logView").textContent =
+      (l.lines && l.lines.length) ? l.lines.join("\n") : "暂无日志（平台还没跑过）";
+  } catch (e) {
+    document.getElementById("logView").textContent = "看板连接失败：" + e;
+  }
+}
+
+async function startPlatform() {
+  document.getElementById("platformMsg").textContent = "正在启动……";
+  const r = await api("/api/platform/start", "POST", {});
+  document.getElementById("platformMsg").textContent =
+    r.ok ? "已启动（PID " + r.pid + "），约 10 秒后出第一行心跳" : "启动失败：" + (r.error || "");
+  document.getElementById("platformMsg").className = r.ok ? "muted" : "err";
+  refreshAll();
+}
+
+async function stopPlatform() {
+  const r = await api("/api/platform/stop", "POST", {});
+  document.getElementById("platformMsg").textContent = r.ok ? "已停止" : "停止失败：" + (r.error || "");
+  document.getElementById("platformMsg").className = r.ok ? "muted" : "err";
+  refreshAll();
+}
+
+async function runBacktest() {
+  const btn = document.getElementById("btnBt");
+  btn.disabled = true;
+  document.getElementById("btResult").innerHTML = "回测中……（数据多时可能要几十秒）";
+  try {
+    const r = await api("/api/backtest", "POST", {
+      buy_threshold: parseFloat(document.getElementById("buyT").value),
+      sell_threshold: parseFloat(document.getElementById("sellT").value),
+      size: parseFloat(document.getElementById("size").value),
+      bankroll: parseFloat(document.getElementById("bankroll").value),
+      daily_loss_cap: parseFloat(document.getElementById("cap").value)
+    });
+    if (!r.ok) {
+      document.getElementById("btResult").innerHTML = '<span class="err">' + esc(r.error || "回测失败") + "</span>";
+      return;
+    }
+    const t = r.result.total, p = r.result.params;
+    document.getElementById("btResult").innerHTML =
+      "<table><tr><td>区间 / 市场 / 快照</td><td>" + r.result.snapshots + " 行，" + r.result.markets + " 个市场</td></tr>"
+      + "<tr><td>参数</td><td>买 ≤ " + p.buy_threshold + "，卖 ≥ " + p.sell_threshold + "，每对 " + p.size + " U，总资金 " + p.bankroll + " U，日亏上限 " + p.daily_loss_cap + " U</td></tr>"
+      + "<tr><td>触发 / 下单 / 完成</td><td>" + t.triggers + " / " + t.placed + " / " + t.completed + "（胜率 " + (t.win_rate == null ? "—" : (t.win_rate * 100).toFixed(1) + "%") + "）</td></tr>"
+      + "<tr><td>单边平仓 / 全撤</td><td>" + t.single_side_closes + "（累计亏损 " + t.single_side_loss + " U）/ " + t.no_fill_cancels + "</td></tr>"
+      + "<tr><td>净利润 / 手续费</td><td>" + t.net_pnl + " U / " + t.fees + " U（毛利润 " + t.gross_pnl + " U）</td></tr>"
+      + "<tr><td>最大回撤 / 期末资金</td><td>" + t.max_drawdown + " U / " + t.final_cash + " U</td></tr></table>"
+      + '<div class="muted">样本内触发 ' + r.result.in_sample.triggers + '，样本外触发 ' + r.result.out_of_sample.triggers
+      + '。逐笔记录见 backtest_trades.jsonl。</div>';
+  } catch (e) {
+    document.getElementById("btResult").innerHTML = '<span class="err">回测请求失败：' + esc(e) + "</span>";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+refreshAll();
+setInterval(refreshAll, 5000);
+</script>
+</body>
+</html>
