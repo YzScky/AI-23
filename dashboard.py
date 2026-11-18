@@ -2,7 +2,8 @@
 
 标准库 only（http.server / sqlite3 / subprocess / json），不用 pip 装任何东西。
 只绑 127.0.0.1:8931，不对外暴露。纸面模式：看板只读状态、启停已有的 run.py、
-触发已有的 backtest.py，不下真单、不连钱包、不新增任何实盘能力。
+触发已有的 backtest.py、不下真单；钱包只读查状态（余额/挂单），
+不新增任何实盘按钮、不下单。
 
 用法：
   python3 dashboard.py [--port 8931] [--db /path/to/history.db]
@@ -291,6 +292,26 @@ def run_backtest(params):
     return {"ok": False, "error": "回测未返回结果：" + " / ".join(tail)}
 
 
+# ---------- 钱包 ----------
+
+def wallet_status():
+    """GET /api/wallet：返回 link_status()（只读：链接状态、掩码地址、余额、挂单数）。
+    py-clob-client-v2 装在 .venv 里，看板用系统 python 跑时先把 .venv 的
+    site-packages 加进路径；还找不到就返回未链接 + 安装提示，绝不让看板崩掉。"""
+    import glob
+    for sp in glob.glob(os.path.join(ROOT, ".venv", "lib", "python*", "site-packages")):
+        if sp not in sys.path:
+            sys.path.insert(0, sp)
+    try:
+        sys.path.insert(0, ROOT)
+        from quant_platform.clob_client import link_status
+        return link_status()
+    except Exception as e:
+        return {"linked": False, "wallet_address": None, "balance": None,
+                "allowance": None, "open_orders": None,
+                "error": f"钱包状态查询失败：{str(e)[:150]}"}
+
+
 # ---------- HTTP ----------
 
 class Handler(BaseHTTPRequestHandler):
@@ -338,6 +359,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(200, {"ok": True, "db": counts, "markets": markets})
             elif p == "/api/logs":
                 self._send_json(200, {"ok": True, "lines": last_log_lines(100)})
+            elif p == "/api/wallet":
+                self._send_json(200, {"ok": True, "wallet": wallet_status()})
             else:
                 self._send_json(404, {"ok": False, "error": f"没有这个接口：{p}"})
         except Exception as e:

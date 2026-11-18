@@ -1,9 +1,9 @@
 # Polymarket 量化平台（Mac 版，纸面模式）
 
 ## 现在是什么状态
-- 策略：`observe_only`（占位，只观察不下单，策略以后再定）
-- 钱包：没接。实盘开关 `live_trading: false`，强行开会直接报错停住
-- 跑通的是：Gamma 发现市场 → CLOB REST 种子盘口 → CLOB WebSocket 实时盘口 → 引擎算双边和 → 纸面账本 + 风控
+- 策略：`observe_only`（占位，只观察不下单，策略按你的决定放最后）
+- 钱包：没接。先跑 `link_wallet.py` 链接（只读验证）。实盘开关 `live_trading: false`，强行开会直接报错停住；下单默认 dry-run，实盘要 `--live` + `--confirm` + 开关三重确认
+- 跑通的是：Gamma 发现市场 → CLOB REST 种子盘口 → CLOB WebSocket 实时盘口 → 引擎算双边和 → 纸面账本 + 风控；钱包链接走官方 py-clob-client-v2（L1 派生凭证 + L2 查余额/挂单/下单）
 
 ## Mac 上跑（三步）
 1. 双击 `install.command`（第一次装依赖，装一次就行）
@@ -79,6 +79,55 @@
   python3 rotate_logs.py
   ```
 
+## 第 4a 步 钱包链接（只读验证，不下单）
+
+先说结论（以 py-clob-client-v2 1.2.2 源码 + 官方文档为准，v1 已归档停更，绝不用）：
+- 认证分两层：L1 钱包私钥 EIP-712 签名 → 派生 API 凭证；L2 API 凭证 HMAC → 查余额/挂单/下单/撤单。
+- **私钥运行时必须有**：L2 请求头要带由私钥派生的钱包地址，官方客户端没私钥就拒绝
+  查余额、查挂单——不只是下单才要。没有网站页面可以点一点就生成 API 凭证，
+  官方路径就是用钱包签名派生。
+- 凭证只放 Mac 本地 `.env`（0600），绝不发聊天、不进 git、不进日志。
+
+链接步骤（Mac 上）：
+```
+./install.command                                  # 装 py-clob-client-v2
+.venv/bin/python link_wallet.py                    # 交互式：选路、填凭证、验证
+.venv/bin/python link_wallet.py --check            # 只验证当前 .env 的链接状态
+.venv/bin/python link_wallet.py --derive           # 用 .env 里的 PK 派生 API 凭证并写入
+```
+- 选 1：你已有 API 凭证（apiKey / secret / passphrase），逐个粘贴（输入不回显）。
+- 选 2：没有凭证，用钱包私钥派生：私钥只在内存里签名，绝不打印；派生完问你
+  是否把私钥也存进 .env——存（输 yes）才能让看板查余额、下单；不存的话，
+  查余额/挂单/下单都会报缺少 PK，直到你改主意再跑一次。
+- 链接成功会显示：已链接 + 掩码地址（0x1234...abcd）+ pUSD 余额 + 未成交挂单数。
+- 看板上也有钱包卡（http://127.0.0.1:8931），显示同样的只读状态；未链接时显示原因。
+- `.env` 变量名按官方 .env.example：`PK`、`CLOB_API_KEY`、`CLOB_SECRET`、
+  `CLOB_PASS_PHRASE`、`CLOB_API_URL`（默认 https://clob.polymarket.com）、
+  `POLYMARKET_SIGNATURE_TYPE`（0=EOA 普通钱包默认；1=POLY_PROXY；
+  2=POLY_GNOSIS_SAFE；3=POLY_1271，2026-05-04 后建的 Deposit Wallet）。
+  注意官方叫 `CLOB_SECRET`，不是 `CLOB_API_SECRET`。
+- 余额是 CLOB 抵押物 pUSD：接口返回 6 位定点整数（'125500000' → 125.5），已换算显示。
+
+## 下单（默认 dry-run，实盘多重锁）
+
+```
+.venv/bin/python place_order.py --token <token_id> --side BUY --price 0.40 --size 100
+```
+- 默认 dry-run：只校验参数 + 风控上限 + 查公开盘口，**什么都不发**，返回模拟结果。
+- 发真单要同时满足四个条件，缺一个都不发：
+  1. 命令行同时带 `--live` 和 `--confirm`
+  2. `config.py` 里 `live_trading=true`（默认 False）
+  3. 风控上限通过：单笔名义金额（价×量）≤ `max_pair_size`（默认 200 U）；
+     当日已实现亏损 < `daily_loss_cap`（默认 100 U）
+  4. 钱包已链接（.env 凭证齐全）
+- 输出开头大字标明【DRY-RUN 模拟】或【LIVE 实盘】。每一次尝试（模拟/实盘/撤单）
+  都追加记进 `orders.log`（只记白名单字段：时间、种类、token、方向、价格、数量、
+  结果、订单号；绝不记凭证）。
+- 撤单、查单（命令行暂不提供入口时用 Python 调 `ClobLink().cancel_order(id)` /
+  `get_order(id)`；查单是只读，实盘开关不影响；撤单同样受实盘开关管）。
+- **实盘现在还是关的**：策略、钱包、实盘参数都要你亲口确认后才开。策略按你的决定
+  放最后，第四步先把接口做到位。
+
 ## 文件
 - `config.py`：配置（模式、市场、风控上限、策略名）
 - `quant_platform/feed.py`：行情（Gamma + CLOB WS）
@@ -87,6 +136,13 @@
 - `quant_platform/risk.py`：风控（单笔上限、日亏熔断、kill switch）
 - `quant_platform/strategy.py`：策略接口 + 占位策略
 - `quant_platform/storage.py`：历史数据（SQLite，`history.db`）
+- `quant_platform/clob_client.py`：CLOB v2 链接 + 只读查询 + 下单（默认 dry-run，
+  实盘开关 + 风控上限双重锁；凭证只从本地 .env 读）
+- `link_wallet.py`：Mac 本地交互式钱包链接（填凭证 / 用私钥派生凭证 / 验证）
+- `place_order.py`：下单命令行（默认 dry-run；实盘要 --live + --confirm + 开关）
+- `orders.log`：每次下单/撤单尝试的记录（只记白名单字段，不记凭证）
+- `.env`：本地凭证（0600，只放 Mac，不打包、不进 git）
+- `.env.example`：凭证模板（变量名按 v2 官方 .env.example）
 - `history.py`：查历史数据（`--stats` / `--market <id>`）
 - `backtest.py`：回测引擎（重放盘口快照，样本内外切分，逐笔写 `backtest_trades.jsonl`）
 - `dashboard.py`：看板后端（标准库 only，127.0.0.1:8931，状态/启停/回测接口）

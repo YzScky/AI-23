@@ -319,6 +319,19 @@
 
   <div class="card">
     <div class="card-head">
+      <h2>钱包 <span id="walletBadge" class="badge off">未链接</span></h2>
+      <span class="hint">只读查询：余额 / 挂单（下单不在看板上，走命令行）</span>
+    </div>
+    <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="stat"><div class="k">钱包地址</div><div class="v" id="walletAddr">—</div></div>
+      <div class="stat"><div class="k">pUSD 余额</div><div class="v" id="walletBalance">—</div></div>
+      <div class="stat"><div class="k">未成交挂单</div><div class="v" id="walletOrders">—</div></div>
+    </div>
+    <div class="muted" id="walletMsg" style="margin-top:10px">未链接：先在 Mac 终端跑 .venv/bin/python link_wallet.py 配好凭证。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
       <h2>市场盘口</h2>
       <span class="hint" id="dbLine"></span>
     </div>
@@ -405,6 +418,26 @@ function renderStatus(d) {
   }
 }
 
+async function refreshWallet() {
+  try {
+    const w = await api("/api/wallet");
+    const d = w.wallet || {};
+    const badge = document.getElementById("walletBadge");
+    badge.textContent = d.linked ? "已链接" : "未链接";
+    badge.className = "badge " + (d.linked ? "on" : "off");
+    document.getElementById("walletAddr").textContent = d.wallet_address || "—";
+    document.getElementById("walletBalance").textContent =
+      (d.balance == null) ? "—" : d.balance + " pUSD";
+    document.getElementById("walletOrders").textContent =
+      (d.open_orders == null) ? "—" : d.open_orders;
+    document.getElementById("walletMsg").textContent = d.linked
+      ? "已链接。余额是 CLOB 抵押物 pUSD，挂单只数第一页。"
+      : (d.error || "未链接：先在 Mac 终端跑 .venv/bin/python link_wallet.py 配好凭证。");
+  } catch (e) {
+    document.getElementById("walletMsg").textContent = "钱包状态拉不到：" + e;
+  }
+}
+
 async function refreshAll() {
   try {
     const d = await api("/api/status");
@@ -415,6 +448,7 @@ async function refreshAll() {
   } catch (e) {
     document.getElementById("logView").textContent = "看板连接失败：" + e;
   }
+  refreshWallet();
 }
 
 async function startPlatform() {
