@@ -57,7 +57,7 @@
   - 跑回测：填阈值、每对金额、总资金、日亏上限，点一下就跑 `backtest.py`，结果直接显示在页面上
   - 运行日志：最近 100 行 platform.log
 - 接口（看板自己用，浏览器里也能直接看）：
-  - `GET /api/status`：运行状态 + 最新心跳 + 各市场最新盘口
+  - `GET /api/status`：运行状态 + 最新心跳 + 各市场最新盘口 + 数据流健康（feed）
   - `GET /api/history`：history.db 行数 + 各市场最新盘口
   - `GET /api/logs`：最近 100 行日志
   - `POST /api/platform/start`：后台启动 run.py（1 小时，轮询 5 秒），PID 记 platform.pid
@@ -128,6 +128,34 @@
 - **实盘现在还是关的**：策略、钱包、实盘参数都要你亲口确认后才开。策略按你的决定
   放最后，第四步先把接口做到位。
 
+## 数据接入（统一数据流，给策略用）
+
+`quant_platform/data_feed.py` 把行情和账户拼成一份快照，策略以后直接吃它，
+不用自己再拼。只读，不下单。
+- 快照形状：`{ts, markets: [...], account: {...}, health: {...}}`；每市场一行：
+  `market_id / question / yes_bid / yes_ask / no_bid / no_ask / buy_both
+  （两边都买的成本）/ sell_both（两边都卖的收入）/ spread（sell_both - buy_both，
+  通常为负）/ fee_rate / as_of`；账户是 `linked / wallet_address（已掩码）/
+  pusd_balance / open_orders / error / as_of`。
+- 行情来源：默认读 `history.db` 里每个市场最新一行盘口；策略在进程内用时
+  可传 `market_source` 回调（返回引擎 feed 那种 state dict 列表）直连实时行情。
+- 账户节流：`link_status()` 最多 30 秒实读一次，两次之间用缓存值。
+  没配 `.env` / 没装 v2 客户端时账户部分显示未链接，不崩。
+- 账户快照落盘：`history.db` 新增 `account_snapshots(ts, pusd_balance,
+  open_orders)` 表（books/trades 两张表不动）；已联通时才记，最多 60 秒一次，
+  或余额/挂单数变了立刻记。重启后先用库里最新一行做基准，不重复记。
+- 命令行（在平台目录跑）：
+  ```
+  .venv/bin/python -m quant_platform.data_feed --once        # 打印一份快照（只读探针，不写盘）
+  .venv/bin/python -m quant_platform.data_feed --watch 10    # 每 10 秒打印一份（会按规则落盘账户快照）
+  ```
+  `--once` 不建文件、不写盘，`history.db` 不存在时市场为空。`--watch` 是数据流
+  的记录进程，Ctrl+C 停；引擎本身不写账户快照，策略步接手后由策略在进程内调
+  `DataFeed.build_snapshot()`。
+- 看板 `GET /api/status` 多了一个 `feed` 字段：`last_market_ts`（最新盘口时间）、
+  `last_account_refresh_ts`（最新账户快照时间）、`account_linked`（10 分钟内有
+  账户快照即为真）。页面没改，只加了接口字段。
+
 ## 文件
 - `config.py`：配置（模式、市场、风控上限、策略名）
 - `quant_platform/feed.py`：行情（Gamma + CLOB WS）
@@ -135,7 +163,10 @@
 - `quant_platform/ledger.py`：纸面账本
 - `quant_platform/risk.py`：风控（单笔上限、日亏熔断、kill switch）
 - `quant_platform/strategy.py`：策略接口 + 占位策略
-- `quant_platform/storage.py`：历史数据（SQLite，`history.db`）
+- `quant_platform/storage.py`：历史数据（SQLite，`history.db`；books/trades +
+  account_snapshots）
+- `quant_platform/data_feed.py`：统一数据流（行情 + 账户快照，只读，不下单；
+  `--once` / `--watch N`）
 - `quant_platform/clob_client.py`：CLOB v2 链接 + 只读查询 + 下单（默认 dry-run，
   实盘开关 + 风控上限双重锁；凭证只从本地 .env 读）
 - `link_wallet.py`：Mac 本地交互式钱包链接（填凭证 / 用私钥派生凭证 / 验证）

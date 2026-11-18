@@ -287,12 +287,14 @@ class ClobLink:
             client = self._client()
             addr = _call_with_timeout(client.get_address, timeout=10)
             out["wallet_address"] = mask_address(addr)
+            from py_clob_client_v2 import AssetType, BalanceAllowanceParams
             try:
                 _call_with_timeout(
-                    lambda: client.update_balance_allowance(), timeout=10)
+                    lambda: client.update_balance_allowance(
+                        BalanceAllowanceParams(asset_type=AssetType.COLLATERAL)),
+                    timeout=10)
             except Exception:
                 pass  # 刷新缓存失败不致命，继续读缓存值
-            from py_clob_client_v2 import AssetType, BalanceAllowanceParams
             bal = _call_with_timeout(
                 lambda: client.get_balance_allowance(
                     BalanceAllowanceParams(asset_type=AssetType.COLLATERAL)),

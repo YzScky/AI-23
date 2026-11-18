@@ -30,6 +30,7 @@ BACKTEST_PY = os.path.join(ROOT, "backtest.py")
 RUN_PY = os.path.join(ROOT, "run.py")
 HOST = "127.0.0.1"
 DEFAULT_PORT = 8931
+ACCOUNT_LINKED_FRESH_SECONDS = 600  # /api/status 判“已链接”：10 分钟内有账户快照
 
 # 启动时轮转一次日志（文件不存在或未超限时什么也不做）
 try:
@@ -82,6 +83,32 @@ def pid_alive(pid):
         return False
 
 
+def _find_run_py_pid():
+    """找到终端里手动起的引擎进程（run.py）：看板自己没写 pid 文件时也认得出来。
+    只认 python 直接跑 run.py 的命令行（python… run.py …），
+    像 grep run.py、或是命令行里顺带提到 run.py 的 shell 不会误认。
+    找不到或 pgrep 不可用时返回 None。"""
+    try:
+        out = subprocess.run(
+            ["pgrep", "-f", r"python[^ ]* +[^ ]*run\.py"], capture_output=True,
+            text=True, timeout=5).stdout
+    except Exception:
+        return None
+    for line in out.splitlines():
+        try:
+            pid = int(line.strip())
+        except ValueError:
+            continue
+        if pid == os.getpid():
+            continue
+        try:
+            os.kill(pid, 0)
+        except Exception:
+            continue
+        return pid
+    return None
+
+
 def platform_running():
     pid = read_pid()
     if pid and pid_alive(pid):
@@ -91,7 +118,8 @@ def platform_running():
             os.remove(PID_PATH)
         except Exception:
             pass
-    return None
+    # pid 文件没有或已失效：再看看是不是终端里手动起的引擎
+    return _find_run_py_pid()
 
 
 def pick_python():
@@ -127,7 +155,8 @@ def start_platform():
 
 def stop_platform():
     global _platform_proc
-    pid = read_pid()
+    # 用 platform_running() 而不是只读 pid 文件：终端里手动起的引擎也要能停掉
+    pid = platform_running()
     if not pid:
         return {"ok": True, "running": False}
     try:
@@ -252,6 +281,33 @@ def query_db():
             "size_kb": round(size_kb, 1)}, markets
 
 
+def feed_health(markets):
+    """数据流健康（只读 DB，不调 CLOB，不加节流负担）：
+    last_market_ts = 最新盘口时间；last_account_refresh_ts = 最新账户快照时间；
+    account_linked = 10 分钟内有账户快照（即账户曾联通且数据流在跑）。
+    account_snapshots 表还没建出来时返回空值，绝不抛异常。"""
+    last_market_ts = max((m["ts"] for m in markets), default=None)
+    last_account_ts = None
+    try:
+        path = db_path()
+        if os.path.exists(path):
+            conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, timeout=5)
+            try:
+                row = conn.execute(
+                    "SELECT ts FROM account_snapshots ORDER BY ts DESC LIMIT 1").fetchone()
+                if row:
+                    last_account_ts = row[0]
+            finally:
+                conn.close()
+    except Exception:
+        last_account_ts = None
+    linked = (last_account_ts is not None
+              and time.time() - last_account_ts <= ACCOUNT_LINKED_FRESH_SECONDS)
+    return {"last_market_ts": last_market_ts,
+            "last_account_refresh_ts": last_account_ts,
+            "account_linked": linked}
+
+
 # ---------- 回测 ----------
 
 def run_backtest(params):
@@ -353,6 +409,7 @@ class Handler(BaseHTTPRequestHandler):
                     "ok": True, "running": pid is not None, "pid": pid,
                     "hb": last_hb(), "markets": markets,
                     "db": counts, "log_exists": os.path.exists(LOG_PATH),
+                    "feed": feed_health(markets),
                 })
             elif p == "/api/history":
                 counts, markets = query_db()

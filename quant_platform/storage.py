@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS trades (
 );
 CREATE INDEX IF NOT EXISTS idx_trades_market_ts ON trades (market_id, ts);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_trades_dedupe ON trades (market_id, ts, price, size);
+CREATE TABLE IF NOT EXISTS account_snapshots (
+    ts INTEGER, pusd_balance REAL, open_orders INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_account_snapshots_ts ON account_snapshots (ts);
 """
 
 
@@ -73,6 +77,25 @@ class HistoryStore:
             self.conn.commit()
             self._writes_since_commit = 0
             self._last_commit = time.time()
+
+    def write_account_snapshot(self, ts, pusd_balance, open_orders):
+        """记一行账户快照（ts, pUSD 余额, 未成交挂单数）。调用方负责节流
+        （≤60 秒一次，或余额/挂单数变化时）。余额/挂单未知时存 NULL。"""
+        with self._lock:
+            self.conn.execute(
+                "INSERT INTO account_snapshots (ts, pusd_balance, open_orders)"
+                " VALUES (?,?,?)",
+                (int(ts),
+                 None if pusd_balance is None else float(pusd_balance),
+                 None if open_orders is None else int(open_orders)))
+            self._maybe_commit()
+
+    def latest_account_snapshot(self):
+        """最新一行账户快照 (ts, pusd_balance, open_orders)，没有返回 None。"""
+        row = self.conn.execute(
+            "SELECT ts, pusd_balance, open_orders FROM account_snapshots"
+            " ORDER BY ts DESC LIMIT 1").fetchone()
+        return row
 
     def counts(self):
         books = self.conn.execute("SELECT COUNT(*) FROM books").fetchone()[0]
