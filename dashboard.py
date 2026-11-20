@@ -1,9 +1,11 @@
-"""Polymarket 平台看板（第 6 步）：本地仪表盘 + 平台启停 + 回测触发。
+"""聚合量化平台看板：本地仪表盘 + 平台启停 + 回测触发。
 
+两个板块：预测（Polymarket，现有）+ 合约（Binance 期货，新增）。
 标准库 only（http.server / sqlite3 / subprocess / json），不用 pip 装任何东西。
 只绑 127.0.0.1:8931，不对外暴露。纸面模式：看板只读状态、启停已有的 run.py、
 触发已有的 backtest.py、不下真单；钱包只读查状态（余额/挂单），
-不新增任何实盘按钮、不下单。
+不新增任何实盘按钮、不下单。合约区也一样：只读账户 + WS 实时价，
+下单走命令行 binance_order.py。
 
 用法：
   python3 dashboard.py [--port 8931] [--db /path/to/history.db]
@@ -368,6 +370,150 @@ def wallet_status():
                 "error": f"钱包状态查询失败：{str(e)[:150]}"}
 
 
+# ---------- 币安合约 ----------
+
+_binance_stream = None       # BinancePriceStream 单例（看板进程内）
+_binance_stream_failed = False
+_binance_cache = {"ts": 0, "data": None, "banned": False,
+                  "banned_error": None, "last_price_fetch": 0, "price": None,
+                  "price_ts": 0, "price_error": None}
+BINANCE_ACCOUNT_TTL = 30        # 账户快照缓存 30 秒：看板 5 秒刷一次也不多调币安
+BINANCE_REFRESH_MIN_INTERVAL = 10  # 手动刷新最短间隔 10 秒（防连点）
+BINANCE_PRICE_REST_MIN_INTERVAL = 60  # WS 断了时，REST 补价最密 60 秒一次
+
+
+def _venv_site_packages():
+    import glob
+    for sp in glob.glob(os.path.join(ROOT, ".venv", "lib", "python*", "site-packages")):
+        if sp not in sys.path:
+            sys.path.insert(0, sp)
+
+
+def _get_binance_stream():
+    """启动（或取回）WS 标记价流。启动失败只记一次，不每轮重试。"""
+    global _binance_stream, _binance_stream_failed
+    if _binance_stream is not None:
+        return _binance_stream
+    if _binance_stream_failed:
+        return None
+    try:
+        _venv_site_packages()
+        sys.path.insert(0, ROOT)
+        from quant_platform.binance_client import BinancePriceStream
+        try:
+            from config import CONFIG
+            syms = (CONFIG.get("binance") or {}).get("symbols") or ["BTCUSDT"]
+        except Exception:
+            syms = ["BTCUSDT"]
+        _binance_stream = BinancePriceStream(syms)
+        _binance_stream.start()
+        return _binance_stream
+    except Exception:
+        _binance_stream_failed = True
+        return None
+
+
+def binance_status_data(force=False):
+    """GET /api/binance：连接状态 + 余额 + 持仓 + 挂单 + 现价 + 最近模拟单。
+    账户走 30 秒缓存；遇到 429/418/-1003 就停掉自动刷新，只等手动刷新；
+    WS 断了时现价最多 60 秒补一次 REST，绝不轮询。绝不抛异常。"""
+    global _binance_cache
+    try:
+        from quant_platform.binance_client import (
+            ApiBanned, BinanceLink, public_price, recent_binance_orders)
+    except Exception as e:
+        return {"ok": False, "error": f"币安模块导入失败：{str(e)[:150]}",
+                "stream": {"running": False, "connected": False,
+                           "prices": {}, "error": "模块导入失败"}}
+    stream = _get_binance_stream()
+    stream_st = stream.status() if stream else {
+        "running": False, "connected": False, "prices": {},
+        "error": "WS 价格流未启动（websocket-client 未装或启动失败）"}
+
+    # 现价：优先 WS；WS 没价且超过 60 秒没补过，才单次 REST 补一次
+    price, price_ts = None, None
+    prices = stream_st.get("prices") or {}
+    for sym, p in prices.items():
+        if time.time() - p.get("ts", 0) <= 30:
+            price, price_ts = p["price"], p["ts"]
+            break
+    if price is None:
+        now = time.time()
+        if now - _binance_cache["last_price_fetch"] >= BINANCE_PRICE_REST_MIN_INTERVAL:
+            _binance_cache["last_price_fetch"] = now
+            try:
+                price = public_price("BTCUSDT")
+                price_ts = now
+                _binance_cache.update({"price": price, "price_ts": price_ts,
+                                       "price_error": None})
+            except ApiBanned as e:
+                _binance_cache["price_error"] = str(e)[:150]
+            except Exception as e:
+                _binance_cache["price_error"] = str(e)[:150]
+        else:
+            price = _binance_cache.get("price")
+            price_ts = _binance_cache.get("price_ts")
+
+    # 账户：30 秒缓存；封禁后自动刷新停掉，只响应手动刷新；
+    # 手动刷新 10 秒内重复点也直接用缓存。
+    now = time.time()
+    cache = _binance_cache
+    too_soon = (force and cache["data"] is not None
+                and now - cache["ts"] < BINANCE_REFRESH_MIN_INTERVAL)
+    if cache["banned"] and not force:
+        need = False
+    elif too_soon:
+        need = False
+    elif force:
+        need = True
+    else:
+        need = cache["data"] is None or now - cache["ts"] >= BINANCE_ACCOUNT_TTL
+    if need:
+        try:
+            data = BinanceLink().link_status()
+            cache.update({"data": data, "ts": now})
+            err = (data.get("error") or "")
+            if "限流" in err or "封 IP" in err:
+                cache.update({"banned": True, "banned_error": err})
+            else:
+                cache.update({"banned": False, "banned_error": None})
+        except ApiBanned as e:
+            cache.update({"banned": True, "banned_error": str(e)[:200]})
+        except Exception as e:
+            cache.update({"data": {"linked": False, "balance_usdt": None,
+                                   "available_usdt": None, "positions": [],
+                                   "open_orders": None,
+                                   "error": str(e)[:200]}, "ts": now})
+    data = cache["data"] or {"linked": False, "balance_usdt": None,
+                             "available_usdt": None, "positions": [],
+                             "open_orders": None, "error": "暂无数据"}
+    return {"ok": True, "binance": data, "stream": stream_st,
+            "price": price, "price_ts": price_ts,
+            "price_error": _binance_cache.get("price_error"),
+            "cached": not need, "banned": cache["banned"],
+            "banned_error": cache.get("banned_error"),
+            "orders": recent_binance_orders(limit=20)}
+
+
+def binance_reconnect_stream():
+    """POST /api/binance/reconnect：手动重启 WS 价格流。"""
+    global _binance_stream, _binance_stream_failed
+    try:
+        if _binance_stream is not None:
+            try:
+                _binance_stream.stop()
+            except Exception:
+                pass
+        _binance_stream = None
+        _binance_stream_failed = False
+        stream = _get_binance_stream()
+        if stream is None:
+            return {"ok": False, "error": "WS 价格流启动失败（见看板币安区错误信息）"}
+        return {"ok": True, "stream": stream.status()}
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200]}
+
+
 # ---------- HTTP ----------
 
 class Handler(BaseHTTPRequestHandler):
@@ -418,6 +564,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(200, {"ok": True, "lines": last_log_lines(100)})
             elif p == "/api/wallet":
                 self._send_json(200, {"ok": True, "wallet": wallet_status()})
+            elif p == "/api/binance":
+                self._send_json(200, binance_status_data())
             else:
                 self._send_json(404, {"ok": False, "error": f"没有这个接口：{p}"})
         except Exception as e:
@@ -438,6 +586,10 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(200, stop_platform())
             elif p == "/api/backtest":
                 self._send_json(200, run_backtest(params if isinstance(params, dict) else {}))
+            elif p == "/api/binance/refresh":
+                self._send_json(200, binance_status_data(force=True))
+            elif p == "/api/binance/reconnect":
+                self._send_json(200, binance_reconnect_stream())
             else:
                 self._send_json(404, {"ok": False, "error": f"没有这个接口：{p}"})
         except Exception as e:

@@ -17,4 +17,18 @@ CONFIG = {
         "name": "observe_only",  # 策略以后再定；新策略接 quant_platform/strategy.py 的 Strategy 接口
     },
     "history": True,      # 历史数据存本地 history.db（SQLite）；run.py --no-history 可关
+    # 合约板块（币安期货）：连接 + 账户 + 下单管道。策略以后再定，本节不含任何信号。
+    "binance": {
+        "live_trading": False,  # 合约实盘总开关：默认关（和上面 Polymarket 的开关分开）
+        "capital": 200.0,       # 合约本金（纸面）
+        "margin_per_trade": 10.0,  # 每单保证金 10U
+        "leverage": 10,         # 杠杆 10x
+        "stop_pct": 0.05,       # 止损 5%
+        "take_pct": 0.60,       # 止盈 60%
+        "long_only": True,      # 只做多，不开空
+        "daily_loss_cap": 50.0,    # 日亏上限 50U
+        "max_total_loss": 500.0,   # 累计亏 500U 熔断
+        "fee_rate": 0.0005,     # 每笔 0.05%
+        "symbols": ["BTCUSDT"],
+    },
 }

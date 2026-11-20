@@ -190,3 +190,68 @@
 - 私钥、助记词绝不进代码、绝不发聊天
 - API 凭证只放 Mac 本地 `.env`，不上传、不分享
 - 实盘要开，必须同时满足：钱包接好 + 凭证配好 + 参数（每单/总资金/日亏上限）你亲口确认
+
+## 第七步 合约（Binance 期货）——聚合平台第二个板块
+
+看板现在是两个板块：**预测**（Polymarket，上面）+ **合约**（Binance 期货，
+下面）。合约这边只建了连接 + 账户 + 下单管道，策略以后再定，本模块不含
+任何策略信号。
+
+### 先测通不通（不用凭证，先跑这个）
+```bash
+.venv/bin/python binance_link.py --test
+```
+测两样：① fapi.binance.com 的 REST 现价通不通；② wss://fstream.binance.com
+的 WS 标记价流通不通。REST 不通就别填凭证——填了也连不上，先换网络/VPN
+出口。WS 不通不影响下单和查账户（那两样走 REST），只影响看板里的实时价，
+看板会降级成手动刷新取价。
+
+### 接 API（Mac 本地交互式）
+```bash
+.venv/bin/python binance_link.py           # 填 Key/Secret、验证
+.venv/bin/python binance_link.py --check   # 只验证当前 .env 的链接状态
+```
+开 Key 时必须勾 Enable Futures（期货权限），必须不勾 Enable Withdrawals
+（提现），建议再勾 IP 白名单。凭证只进 Mac 本地 `.env`（0600），和
+Polymarket 的凭证共存一个文件，绝不打印、绝不外发。
+
+### 下单（默认 dry-run，不发真单）
+```bash
+.venv/bin/python binance_order.py --symbol BTCUSDT --side BUY
+.venv/bin/python binance_order.py --symbol BTCUSDT --side BUY --live --confirm
+.venv/bin/python binance_order.py --symbol BTCUSDT --side SELL --close   # 平多
+```
+纸面默认：保证金 10U，杠杆 10x，止损 5%，止盈 60%，只做多，日亏上限 50U。
+实盘要三重确认：`--live` + `--confirm` + config.py 里 `binance.live_trading=true`
+（默认 False）。进场是市价单，随后自动挂止损市价单（STOP_MARKET）和止盈
+市价单（TAKE_PROFIT_MARKET），都是 closePosition；止损/止盈有挂不上的，
+输出里会明说，主单已成交，必须人工检查挂单。每一次尝试都记进
+`binance_orders.log`（只记白名单字段，不记凭证）。
+
+### 看板合约区
+- 币安合约卡：BTCUSDT 标记价（WS 流）、USDT 钱包余额/可用、持仓、挂单、
+  价格流状态；按钮只有“刷新账户”和“重连价格流”，没有下单按钮。
+- 合约最近记录：`binance_orders.log` 最近 20 条。
+- 接口：`GET /api/binance`，`POST /api/binance/refresh`（手动刷新），
+  `POST /api/binance/reconnect`（手动重连价格流）。
+
+### 防封设计（2026-11-12 被封过 IP，code -1003）
+- 没有任何自动重试定时器：任何请求只发一次，失败就报错停住，等人手动再跑。
+- 没有 REST 轮询循环：实时价走 websocket；REST 只在人点了操作时单次调用；
+  看板里的账户快照有 30 秒缓存，5 秒刷一次页面也不多调币安。
+- 遇到 HTTP 429 / 418 / -1003 立刻停（ApiBanned），看板自动刷新随之停掉，
+  只等手动刷新；遇到 HTTP 451（出口 IP 被币安地理限制）明说换网络再试。
+
+### 依赖与端点（决策记录）
+- 不新增依赖：价格流用 websocket-client，平台 install.command 本来就装它，
+  feed.py 也在用。其他全是标准库。
+- 期货在币安 .com（fapi.binance.com + wss://fstream.binance.com），
+  Binance US 没有期货。WS 优先，REST 只做签名调用和单次取价。
+- 文件：`quant_platform/binance_client.py`（连接/签名/下单/WS 流）、
+  `binance_link.py`（链接）、`binance_order.py`（下单）、
+  `test_binance.py`（单测）、`config.py` 里新增 `binance` 一节、
+  `dashboard.py` / `dashboard.html` 增加合约区。
+- 单测：`python3 test_binance.py`（24 个，离线）；`python3 test_binance.py
+  --live-price` 再加一节实网 dry-run（用 data-api.binance.vision 的真实
+  币安现货价验证管线 + 数学；fapi 在测试 VM 上 451，期货价以 Mac 上
+  `binance_link.py --test` 的结果为准）。

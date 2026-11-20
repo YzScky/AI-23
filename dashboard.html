@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Polymarket 平台看板（纸面模式）</title>
+<title>聚合量化平台看板（纸面模式）</title>
 <style>
   :root {
     --bg: #0b0e14;
@@ -265,6 +265,25 @@
     word-break: break-all;
   }
 
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--text-2);
+    text-transform: uppercase;
+    margin: 22px 2px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-label:first-of-type { margin-top: 2px; }
+
   .muted { color: var(--text-3); font-size: 12.5px; }
   .err { color: var(--red-text); font-size: 13px; }
   #platformMsg { margin-top: 10px; min-height: 18px; }
@@ -289,11 +308,13 @@
 <div class="wrap">
   <header class="topbar">
     <div class="title-block">
-      <h1>Polymarket 平台看板<span class="mode">纸面模式</span></h1>
-      <div class="sub">只观察 · 不下单<span class="dot">·</span>看板只限本机访问（127.0.0.1）</div>
+      <h1>聚合量化平台<span class="mode">纸面模式</span></h1>
+      <div class="sub">预测 · 合约 两个板块<span class="dot">·</span>只观察 · 不下单<span class="dot">·</span>看板只限本机访问（127.0.0.1）</div>
     </div>
     <span id="runBadge" class="badge off">未运行</span>
   </header>
+
+  <div class="section-label">预测 · Polymarket</div>
 
   <div class="card">
     <div class="card-head">
@@ -328,6 +349,44 @@
       <div class="stat"><div class="k">未成交挂单</div><div class="v" id="walletOrders">—</div></div>
     </div>
     <div class="muted" id="walletMsg" style="margin-top:10px">未链接：先在 Mac 终端跑 .venv/bin/python link_wallet.py 配好凭证。</div>
+  </div>
+
+  <div class="section-label">合约 · Binance 期货</div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>币安合约 <span id="bnBadge" class="badge off">未链接</span></h2>
+      <span class="hint">只读查询：余额 / 持仓 / 挂单 + WS 标记价（下单不在看板上，走命令行）</span>
+    </div>
+    <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="stat"><div class="k">BTCUSDT 标记价</div><div class="v" id="bnPrice">—</div></div>
+      <div class="stat"><div class="k">USDT 钱包余额</div><div class="v" id="bnBalance">—</div></div>
+      <div class="stat"><div class="k">USDT 可用</div><div class="v" id="bnAvail">—</div></div>
+    </div>
+    <div class="grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 12px;">
+      <div class="stat"><div class="k">持仓</div><div class="v" id="bnPositions">—</div></div>
+      <div class="stat"><div class="k">未成交挂单</div><div class="v" id="bnOrders">—</div></div>
+      <div class="stat"><div class="k">价格流</div><div class="v" id="bnStream">—</div></div>
+    </div>
+    <div class="actions">
+      <button onclick="refreshBinance(true)">刷新账户</button>
+      <button onclick="reconnectBinance()">重连价格流</button>
+      <span class="note">账户 30 秒缓存一次；价格流断了自动重连 3 次，之后手动重连</span>
+    </div>
+    <div class="muted" id="bnMsg" style="margin-top:10px">未链接：先在 Mac 终端跑 .venv/bin/python binance_link.py --test 测通，再跑 binance_link.py 配 API Key。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>合约最近记录</h2>
+      <span class="hint">binance_orders.log 最近 20 条（模拟单 / 实盘单都在这里）</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>时间</th><th>币种</th><th>方向</th><th>价格</th><th>数量</th><th>名义</th><th>止损 / 止盈</th><th>结果</th></tr></thead>
+        <tbody id="bnOrderRows"><tr><td colspan="8" class="muted">暂无记录</td></tr></tbody>
+      </table>
+    </div>
   </div>
 
   <div class="card">
@@ -438,6 +497,66 @@ async function refreshWallet() {
   }
 }
 
+async function refreshBinance(force) {
+  try {
+    const r = await api(force ? "/api/binance/refresh" : "/api/binance", force ? "POST" : "GET", force ? {} : undefined);
+    const d = r.binance || {};
+    const badge = document.getElementById("bnBadge");
+    badge.textContent = d.linked ? "已链接" : "未链接";
+    badge.className = "badge " + (d.linked ? "on" : "off");
+    document.getElementById("bnPrice").textContent =
+      (r.price == null) ? "—" : Number(r.price).toLocaleString("en-US", {maximumFractionDigits: 2}) + " U";
+    document.getElementById("bnBalance").textContent =
+      (d.balance_usdt == null) ? "—" : d.balance_usdt + " U";
+    document.getElementById("bnAvail").textContent =
+      (d.available_usdt == null) ? "—" : d.available_usdt + " U";
+    const pos = d.positions || [];
+    document.getElementById("bnPositions").textContent = pos.length
+      ? pos.map(function (p) { return p.symbol + " " + p.side + " " + p.qty + " @ " + p.entry_price; }).join("；")
+      : (d.linked ? "无持仓" : "—");
+    document.getElementById("bnOrders").textContent =
+      (d.open_orders == null) ? "—" : d.open_orders;
+    const st = r.stream || {};
+    document.getElementById("bnStream").textContent =
+      st.connected ? "WS 已连接" : (st.running ? "WS 连接中……" : "WS 已断开");
+    let msg = d.linked
+      ? "已链接。余额是 USDT 合约钱包，持仓只列非零仓位。"
+      : (d.error || "未链接：先在 Mac 终端跑 .venv/bin/python binance_link.py --test 测通，再跑 binance_link.py 配 API Key。");
+    if (r.banned) msg += "（币安限流/封 IP：自动刷新已停，等封禁过了点“刷新账户”手动再试。）";
+    else if (r.price_error) msg += "（现价取不到：" + r.price_error + "）";
+    else if (st.error) msg += "（价格流：" + st.error + "）";
+    document.getElementById("bnMsg").textContent = msg;
+    const rows = r.orders || [];
+    const tb = document.getElementById("bnOrderRows");
+    if (!rows.length) {
+      tb.innerHTML = '<tr><td colspan="8" class="muted">暂无记录</td></tr>';
+    } else {
+      tb.innerHTML = rows.map(function (o) {
+        const t = o.ts ? new Date(o.ts * 1000).toLocaleString("zh-CN", {hour12: false}) : "—";
+        const sl = (o.stop_price == null ? "—" : o.stop_price) + " / " + (o.take_price == null ? "—" : o.take_price);
+        return "<tr><td>" + esc(t) + "</td><td>" + esc(o.symbol || "—") + "</td>"
+          + "<td>" + esc(o.side || "—") + (o.kind ? "（" + esc(o.kind) + "）" : "") + "</td>"
+          + "<td>" + num(o.price, "—") + "</td><td>" + num(o.qty, "—") + "</td>"
+          + "<td>" + num(o.notional, "—") + "</td><td>" + esc(sl) + "</td>"
+          + "<td>" + esc(o.outcome || "—") + "</td></tr>";
+      }).join("");
+    }
+  } catch (e) {
+    document.getElementById("bnMsg").textContent = "币安状态拉不到：" + e;
+  }
+}
+
+async function reconnectBinance() {
+  document.getElementById("bnMsg").textContent = "正在重连价格流……";
+  try {
+    const r = await api("/api/binance/reconnect", "POST", {});
+    document.getElementById("bnMsg").textContent = r.ok ? "已重连，等几秒看价格流状态" : "重连失败：" + (r.error || "");
+  } catch (e) {
+    document.getElementById("bnMsg").textContent = "重连请求失败：" + e;
+  }
+  refreshBinance();
+}
+
 async function refreshAll() {
   try {
     const d = await api("/api/status");
@@ -449,6 +568,7 @@ async function refreshAll() {
     document.getElementById("logView").textContent = "看板连接失败：" + e;
   }
   refreshWallet();
+  refreshBinance();
 }
 
 async function startPlatform() {
