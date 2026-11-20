@@ -365,20 +365,12 @@ button.mini{padding:4px 12px;font-size:12px}
 
   <section class="page active" id="p-fut-term">
     <div class="card" style="margin-bottom:12px">
-      <h3>资产总览 <span class="sub">USDT 保证金 · BTC 深度视图 ｜ 期初 $8,222.03 · 入金 $0 · 出金 $0</span></h3>
-      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(200px,280px);gap:12px;align-items:center">
-        <div class="metric"><div class="label">总权益</div><div class="val num" style="font-size:18px">$8,248.93</div><div class="hint">可用 $8,240.00 + 占用 $8.93</div></div>
-        <div class="metric"><div class="label">今日盈亏</div><div class="val num up" style="font-size:18px">+4.03</div><div class="hint">已实现 +4.10 ｜ 浮动 -0.07</div></div>
-        <div class="metric"><div class="label">累计盈亏（30天）</div><div class="val num up" style="font-size:18px">+26.90</div><div class="hint">扣费后 ｜ 盈利日 6/7</div></div>
-        <div class="metric"><div class="label">收益率（30天）</div><div class="val num up" style="font-size:18px">+0.33%</div><div class="hint">熔断线 -$50 未触发</div></div>
-        <div>
-          <div style="display:flex;gap:6px;margin-bottom:4px;font-size:11px"><button class="tag tag-gray" data-eq="eq-fut" data-p="0,45 23,47 46,44 69,46 92,48 115,45 138,47 161,43 184,45 207,42 230,44 253,39 280,41">1日</button><button class="tag tag-blue" data-eq="eq-fut" data-p="0,52 35,50 70,51 105,46 140,47 175,43 210,44 245,40 280,37">7日</button><button class="tag tag-gray" data-eq="eq-fut" data-p="0,56 25,54 50,55 75,51 100,52 125,49 150,50 175,47 200,48 225,44 250,45 280,37">30日</button><button class="tag tag-gray" data-eq="eq-fut" data-p="0,58 30,55 60,56 90,53 120,54 150,50 180,51 210,47 240,48 270,42 280,37">全部</button></div>
-          <svg viewBox="0 0 280 64" style="width:100%">
-            <line x1="0" y1="56" x2="280" y2="56" class="gridline" stroke-width="0.5"/>
-            <polyline id="eq-fut" points="0,52 35,50 70,51 105,46 140,47 175,43 210,44 245,40 280,37" fill="none" stroke="#185fa5" stroke-width="1.5"/>
-          </svg>
-          <div style="font-size:10px;color:var(--tx3)">权益曲线 · 含未实现盈亏</div>
-        </div>
+      <h3>资产总览 <span class="sub">ZZZZM 纸面虚拟账本 ｜ 期初 $1,000.00 · 实盘行情虚拟成交</span></h3>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:center">
+        <div class="metric"><div class="label">总权益</div><div class="val num" id="fut-eq-equity" style="font-size:18px">$1,000.00</div><div class="hint" id="fut-eq-cash">虚拟本金 $1,000 ｜ 无持仓</div></div>
+        <div class="metric"><div class="label">已实现盈亏</div><div class="val num" id="fut-eq-realized" style="font-size:18px">+0.00</div><div class="hint">含双边 0.05% 手续费</div></div>
+        <div class="metric"><div class="label">浮动盈亏</div><div class="val num" id="fut-eq-unreal" style="font-size:18px">+0.00</div><div class="hint" id="fut-eq-npos">0 个虚拟持仓</div></div>
+        <div class="metric"><div class="label">累计收益率</div><div class="val num" id="fut-eq-ret" style="font-size:18px">+0.00%</div><div class="hint" id="fut-eq-win">胜率 — ｜ 熔断线 -$50</div></div>
       </div>
     </div>
     <div class="term-grid">
@@ -1483,6 +1475,27 @@ function renderPaper(d){
   if(sub){
     const ret=(p.equity-p.start)/p.start*100;
     sub.textContent=`权益 $${fmt(p.equity)}（${(ret>=0?"+":"")+ret.toFixed(2)}%）· 已实现 ${p.realized>=0?"+":""}${fmt(p.realized)} · 浮动 ${p.unrealized>=0?"+":""}${fmt(p.unrealized)} · 胜率 ${p.trades_n?p.win_rate+"%":"—"} · ${(p.positions||[]).length} 个虚拟持仓 ｜ 虚拟本金 $${fmt(p.start)}`;
+  }
+  // 合约终端 · 资产总览（= 纸面虚拟账本，同一数据源）
+  const cls=v=>v>=0?"up":"dn";
+  const eqEl=g("fut-eq-equity");
+  if(eqEl){
+    eqEl.textContent="$"+fmt(p.equity);
+    eqEl.className="val num "+cls(p.equity-p.start);
+    const margin=Math.max(p.equity-p.cash-p.unrealized,0);
+    g("fut-eq-cash").textContent=`现金 $${fmt(p.cash)} ｜ 占用保证金 $${fmt(margin)}`;
+    const re=g("fut-eq-realized");
+    re.textContent=(p.realized>=0?"+":"")+fmt(p.realized);
+    re.className="val num "+cls(p.realized);
+    const un=g("fut-eq-unreal");
+    un.textContent=(p.unrealized>=0?"+":"")+fmt(p.unrealized);
+    un.className="val num "+cls(p.unrealized);
+    g("fut-eq-npos").textContent=(p.positions||[]).length+" 个虚拟持仓";
+    const rt=(p.equity-p.start)/p.start*100;
+    const rc=g("fut-eq-ret");
+    rc.textContent=(rt>=0?"+":"")+rt.toFixed(2)+"%";
+    rc.className="val num "+cls(rt);
+    g("fut-eq-win").textContent=`胜率 ${p.trades_n?p.win_rate+"%":"—"} ｜ 熔断线 -$50`;
   }
   const ps=g("paper-positions");
   if(ps){
