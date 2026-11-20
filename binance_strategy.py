@@ -959,6 +959,18 @@ def check_btc_market():
     return "unknown", f"❓ BTC信号不明(24h{btc_chg:+.1f}%), 谨慎操作", 0.3, btc_price
 
 
+CONTROL_FILE = os.path.expanduser("~/.zzzm_control.json")
+
+def _control_load():
+    """看板控制文件（~/.zzzm_control.json）：{"paused": true/false, "ts": ...}"""
+    try:
+        with open(CONTROL_FILE) as f: return json.load(f)
+    except Exception: return {}
+
+def trading_paused():
+    """看板「暂停 AI」：true=不开新仓，已有持仓照常管理止损止盈。"""
+    return bool(_control_load().get("paused"))
+
 def main():
     msg = []
     balances, positions = get_account()
@@ -1093,9 +1105,11 @@ def main():
     # 只保留冷却提醒，不阻止开仓
     # 当日亏损停盘已取消 — 评分严格把关，自负盈亏
 
-    # 开仓：只检查持仓上限，不限制
+    # 开仓：只检查持仓上限，不限制；看板「暂停 AI」时不开新仓
+    paused = trading_paused()
+    if paused: msg.append("⏸️ 看板暂停中：不开新仓，已有持仓继续管理")
     max_pos = 6
-    if len(positions) < max_pos and signals:
+    if not paused and len(positions) < max_pos and signals:
         t = place_new_trade(signals)
         if t: 
             er = t.get('entry_range', (0,0))

@@ -1415,6 +1415,29 @@ function renderStrategyUI(cfg){
   }
 }
 
+/* ---------- AI 暂停/恢复（/api/strategy-control -> ~/.zzzm_control.json） ---------- */
+async function controlAI(action){
+  ["#p-fut-term","#p-top-term"].forEach(sel=>{
+    const c=card(sel,"AI 自动执行");if(!c)return;
+    const tag=c.querySelector(".sub.tag");
+    if(tag)tag.textContent=action==="pause"?"暂停中…":"恢复中…";
+  });
+  try{
+    const r=await jpost("/api/strategy-control",{action:action});
+    if(!r.ok&&r.error)console.warn(r.error);
+  }catch(e){console.warn("控制失败",e);}
+  tickPaper();
+}
+function wireAIControls(){
+  ["#p-fut-term","#p-top-term"].forEach(sel=>{
+    const c=card(sel,"AI 自动执行");if(!c)return;
+    c.querySelectorAll("button").forEach(b=>{
+      const t=b.textContent||"";
+      if(/暂停/.test(t))b.onclick=()=>controlAI("pause");
+      if(/恢复/.test(t))b.onclick=()=>controlAI("resume");
+    });
+  });
+}
 /* ---------- 事件日志（/api/logs） ---------- */
 function renderLogs(d){
   const box=card("#p-log","事件日志");
@@ -1470,6 +1493,17 @@ function renderPaper(d){
   const p=d&&d.paper;
   const g=id=>document.getElementById(id);
   if(!g("paper-trades"))return;
+  // 暂停状态同步到两张 AI 卡：标题 tag + 按钮可用性
+  ["#p-fut-term","#p-top-term"].forEach(sel=>{
+    const c=card(sel,"AI 自动执行");if(!c)return;
+    const tag=c.querySelector(".sub.tag");
+    if(tag)tag.textContent=d.paused?"已暂停 · 不开新仓":"运行中 · 纸面";
+    c.querySelectorAll("button").forEach(b=>{
+      const t=b.textContent||"";
+      if(/暂停/.test(t))b.disabled=!!d.paused;
+      if(/恢复/.test(t))b.disabled=!d.paused;
+    });
+  });
   const sub=g("paper-sub");
   if(!p){if(sub)sub.textContent=(d&&d.note)||"等待策略首次开仓";return;}
   if(sub){
@@ -1511,6 +1545,7 @@ async function tickCfg(){try{renderCfg(await jget("/api/config"));}catch(e){}}
 
 function start(){
   wireBacktest();
+  wireAIControls();
   renderHeader();
   if(location.protocol!=="http:"){return;} // file:// 直开：保持示例数据
   tickCfg();tickStatus();tickBinance();tickLogs();tickWallet();tickPaper();

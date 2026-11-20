@@ -462,6 +462,22 @@ def wallet_status():
 
 # ---------- ZZZZM 纸面模拟 ----------
 
+ZZZM_CONTROL = os.path.expanduser("~/.zzzm_control.json")
+
+def zzzm_control(action):
+    """POST /api/strategy-control：暂停/恢复 ZZZZM 开新仓（写控制文件，策略进程每轮检查）。"""
+    if action not in ("pause", "resume"):
+        return {"ok": False, "error": "action 必须是 pause 或 resume"}
+    state = {"paused": action == "pause", "ts": time.time(), "action": action}
+    try:
+        with open(ZZZM_CONTROL, "w", encoding="utf-8") as f:
+            json.dump(state, f)
+    except Exception as e:
+        return {"ok": False, "error": f"写控制文件失败：{str(e)[:150]}"}
+    return {"ok": True, "paused": state["paused"],
+            "note": "已暂停：策略不开新仓，已有持仓继续管理" if state["paused"]
+                    else "已恢复：策略正常开仓"}
+
 def paper_status_data():
     """GET /api/paper：ZZZZM 纸面账本（~/.zzzm_paper.json，binance_strategy.py 写）。
     只读文件 + 对未平仓用公开现价估值，不调币安私有接口，绝不抛异常。"""
@@ -503,7 +519,13 @@ def paper_status_data():
     cash = float(st.get("cash") or 0)
     start = 1000.0
     equity = cash + margin + unreal
-    return {"ok": True, "paper": {
+    paused = False
+    try:
+        with open(ZZZM_CONTROL, encoding="utf-8") as f:
+            paused = bool(json.load(f).get("paused"))
+    except Exception:
+        pass
+    return {"ok": True, "paused": paused, "paper": {
         "cash": round(cash, 2), "start": start,
         "equity": round(equity, 2),
         "realized": realized, "unrealized": round(unreal, 4),
@@ -743,6 +765,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(200, binance_status_data(force=True))
             elif p == "/api/binance/reconnect":
                 self._send_json(200, binance_reconnect_stream())
+            elif p == "/api/strategy-control":
+                self._send_json(200, zzzm_control(params.get("action")))
             else:
                 self._send_json(404, {"ok": False, "error": f"没有这个接口：{p}"})
         except Exception as e:
