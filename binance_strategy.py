@@ -31,6 +31,42 @@ def _load_keys():
 
 API_KEY, SECRET = _load_keys()
 
+# ==================== 纸面模式（实盘行情 · 虚拟成交） ====================
+# 默认 PAPER_MODE=1：行情/评分/止损决策全部真实，只有成交记在本地虚拟账本。
+# 真金白银实盘须显式 export PAPER_MODE=0。
+PAPER_MODE = os.environ.get("PAPER_MODE", "1") != "0"
+PAPER_FILE = os.path.expanduser("~/.zzzm_paper.json")
+PAPER_START_CASH = 1000.0
+TAKER_FEE = 0.0005  # 0.05% taker，双边都收
+
+def _paper_load():
+    if os.path.exists(PAPER_FILE):
+        with open(PAPER_FILE) as f:
+            return json.load(f)
+    return {"cash": PAPER_START_CASH, "positions": {}, "trades": []}
+
+def _paper_save(st):
+    with open(PAPER_FILE, "w") as f:
+        json.dump(st, f, ensure_ascii=False, indent=1)
+
+def _paper_realize(sym, entry, amt, mark, lev, entry_ts):
+    """平掉虚拟仓位：结算保证金+盈亏-双边手续费，写流水。"""
+    st = _paper_load()
+    notional_open = abs(amt) * entry
+    notional_close = abs(amt) * mark
+    fee = notional_open * TAKER_FEE + notional_close * TAKER_FEE
+    pnl = (mark - entry) * amt  # amt>0 多单, <0 空单
+    st["cash"] += abs(amt) * entry / lev + pnl - fee
+    st["positions"].pop(sym, None)
+    st["trades"].append({
+        "ts": time.strftime("%Y-%m-%d %H:%M:%S"), "symbol": sym,
+        "entry": entry, "exit": mark, "amt": amt, "lev": lev,
+        "pnl": round(pnl - fee, 4), "fee": round(fee, 4),
+        "hold_min": round((time.time() - entry_ts) / 60, 1)})
+    st["trades"] = st["trades"][-300:]
+    _paper_save(st)
+    return {"orderId": "PAPER-CLOSE", "pnl": round(pnl - fee, 4)}
+
 def sign_request(params_str):
     return hmac.new(SECRET.encode(), params_str.encode(), hashlib.sha256).hexdigest()
 
@@ -62,6 +98,22 @@ def curl_get(url):
         return None
 
 def get_account():
+    if PAPER_MODE:
+        st = _paper_load()
+        positions = []
+        used_margin = 0.0
+        unreal = 0.0
+        for sym, pp in st["positions"].items():
+            mark = get_mark_price(sym) or pp["entry"]
+            pnl = (mark - pp["entry"]) * pp["amt"]
+            unreal += pnl
+            used_margin += abs(pp["amt"]) * pp["entry"] / pp["lev"]
+            positions.append({"symbol": sym, "side": pp["side"], "amt": pp["amt"],
+                              "entry": pp["entry"], "leverage": int(pp["lev"]), "pnl": pnl})
+        cash = st["cash"]
+        balances = {"USDT": {"total": cash + unreal, "wallet": cash,
+                             "pnl": unreal, "available": max(0.0, cash - used_margin)}}
+        return balances, positions
     data = api_get("/fapi/v2/account")
     if "error" in data: return None, None
     balances = {}
@@ -406,14 +458,36 @@ def analyze_position(symbol, entry_price, amt):
     return (action, reason, round(conf,2), report)
 
 def close_position(symbol, side, amt):
+    if PAPER_MODE:
+        st = _paper_load()
+        pp = st["positions"].get(symbol)
+        if not pp:
+            return {"error": f"paper: {symbol} 无持仓"}
+        mark = get_mark_price(symbol) or pp["entry"]
+        return _paper_realize(symbol, pp["entry"], pp["amt"], mark, pp["lev"], pp["entry_ts"])
     abs_amt = abs(amt); side_to_close = "SELL" if amt > 0 else "BUY"
     return api_post("/fapi/v1/order", f"symbol={symbol}&side={side_to_close}&type=MARKET&quantity={abs_amt}&positionSide={side}")
 
 def place_order(symbol, side, pos_side, qty, leverage=3):
+    if PAPER_MODE:
+        mark = get_mark_price(symbol)
+        if not mark:
+            return {"error": "paper: 拿不到市价"}
+        st = _paper_load()
+        if symbol in st["positions"]:
+            return {"error": "paper: 重复仓位"}
+        st["positions"][symbol] = {"side": pos_side, "amt": float(qty) if side == "BUY" else -float(qty),
+                                   "entry": mark, "lev": leverage,
+                                   "entry_ts": time.time(), "entry_score": 50}
+        st["cash"] -= qty * mark / leverage  # 占用保证金
+        _paper_save(st)
+        return {"orderId": "PAPER-OPEN", "price": mark}
     api_post("/fapi/v1/leverage", f"symbol={symbol}&leverage={leverage}")
     return api_post("/fapi/v1/order", f"symbol={symbol}&side={side}&type=MARKET&quantity={qty}&positionSide={pos_side}")
 
-def set_leverage(symbol, lev): api_post("/fapi/v1/leverage", f"symbol={symbol}&leverage={lev}")
+def set_leverage(symbol, lev):
+    if PAPER_MODE: return
+    api_post("/fapi/v1/leverage", f"symbol={symbol}&leverage={lev}")
 
 def scan_market():
     """按24h+1h+4h多周期涨幅综合排序取前20"""
@@ -889,6 +963,8 @@ def main():
     msg = []
     balances, positions = get_account()
     if balances is None: print("⚠️ API连接失败"); return
+    print("📄 纸面模式：实盘行情 · 虚拟成交（虚拟资金 $1000，账本 ~/.zzzm_paper.json）" if PAPER_MODE
+          else "🔴 实盘模式：PAPER_MODE=0，真实下单！")
 
     # BTC大盘环境判断
     btc_status, btc_desc, btc_coeff, btc_price = check_btc_market()
