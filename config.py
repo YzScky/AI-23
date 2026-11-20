@@ -15,6 +15,19 @@ CONFIG = {
     },
     "strategy": {
         "name": "observe_only",  # 策略以后再定；新策略接 quant_platform/strategy.py 的 Strategy 接口
+        # 篮球低吸 scalp_dip（NBA 比赛盘，纸面模式）：T0=开球时间（市场 start_ts，
+        # 即 Gamma 事件 startTime；startDate 是上架时间，不能当 T0）
+        "scalp_dip": {
+            "bid_price": 0.30,              # 挂单买入价（两队各 30 份）
+            "target": 0.40,                 # 卖单落袋价（maker，手续费 0）
+            "size": 30.0,                   # 每腿份数
+            "pregame_window_s": 60,         # 赛前挂单窗口：T0-60s 至 T0+60s
+            "entry_cutoff_q4_clock_s": 300,  # 赛中开仓截止：Q4 比赛时钟剩 5:00
+            "exit_q4_clock_s": 120,         # 出场：Q4 比赛时钟剩 2:00 市价平掉
+            "underdog_min": 0.25,           # 比赛筛选：弱队赛前价下限
+            "underdog_max": 0.40,           # 比赛筛选：弱队赛前价上限
+            "game_filter": True,            # 比赛筛选开关
+        },
     },
     "history": True,      # 历史数据存本地 history.db（SQLite）；run.py --no-history 可关
     # 合约板块（币安期货）：连接 + 账户 + 下单管道。策略以后再定，本节不含任何信号。

@@ -133,19 +133,31 @@ def pick_python():
     return sys.executable
 
 
+def _current_strategy_name():
+    """当前策略名（读 config.py；看板进程内 import 缓存由 set_strategy 写回时 reload）。"""
+    try:
+        sys.path.insert(0, ROOT)
+        from config import CONFIG
+        return (CONFIG.get("strategy") or {}).get("name")
+    except Exception:
+        return None
+
+
 def start_platform():
     global _platform_proc
     pid = platform_running()
     if pid:
         return {"ok": False, "error": f"平台已在运行（PID {pid}），先停止再启动"}
     py = pick_python()
+    # scalp_dip 一跑就是一晚比赛：8 小时；其他策略保持 1 小时
+    duration = "28800" if _current_strategy_name() == "scalp_dip" else "3600"
     # 注意：引擎 _log() 既 print 又写文件。子进程 stdout 丢弃、stderr 进日志文件，
     # 这样 platform.log 里每行只出现一次（print 的那份不再重复进文件），
     # 而崩溃时的 traceback（走 stderr）仍会被记下来。
     logf = open(LOG_PATH, "a")
     try:
         proc = subprocess.Popen(
-            [py, RUN_PY, "--duration", "3600", "--markets", "20", "--poll", "5"],
+            [py, RUN_PY, "--duration", duration, "--markets", "20", "--poll", "5"],
             cwd=ROOT, stdout=subprocess.DEVNULL, stderr=logf,
             stdin=subprocess.DEVNULL, start_new_session=True)
     finally:
@@ -153,7 +165,7 @@ def start_platform():
     _platform_proc = proc
     with open(PID_PATH, "w") as f:
         f.write(str(proc.pid))
-    return {"ok": True, "pid": proc.pid, "python": py}
+    return {"ok": True, "pid": proc.pid, "python": py, "duration": int(duration)}
 
 
 def stop_platform():
@@ -359,16 +371,73 @@ def safe_config():
     try:
         sys.path.insert(0, ROOT)
         from config import CONFIG
+        from quant_platform.strategy import STRATEGIES
         return {
             "mode": CONFIG.get("mode"),
             "live_trading": CONFIG.get("live_trading"),
             "strategy_name": (CONFIG.get("strategy") or {}).get("name"),
+            "strategies": sorted(STRATEGIES.keys()),
+            "strategy_params": (CONFIG.get("strategy") or {}).get("scalp_dip") or {},
             "risk": CONFIG.get("risk") or {},
             "binance": CONFIG.get("binance") or {},
             "history_enabled": CONFIG.get("history"),
         }
     except Exception as e:
         return {"error": f"config.py 读取失败：{str(e)[:150]}"}
+
+
+CONFIG_PATH = os.path.join(ROOT, "config.py")
+
+
+def set_strategy(name, restart=False):
+    """POST /api/strategy：切换策略名，持久化到 config.py 的 strategy.name
+    （只改这一处，写完重新 import 验证名字已变；重启看板后还在）。
+    restart=true 且引擎在跑时：停 -> 切 -> 起，一次返回新 pid，并在返回里注明
+    纸面账本会重置（ledger 是内存态，重启即清零，持仓和当日盈亏从头算）。
+    引擎在跑且 restart 不为 true 时拒绝，提示先停止再切换。"""
+    try:
+        sys.path.insert(0, ROOT)
+        from quant_platform.strategy import STRATEGIES
+    except Exception as e:
+        return {"ok": False, "error": f"策略注册表读不到：{str(e)[:150]}"}
+    if name not in STRATEGIES:
+        return {"ok": False,
+                "error": f"没有这个策略：{name}（可选：{', '.join(sorted(STRATEGIES))}）"}
+    pid = platform_running()
+    if pid and not restart:
+        return {"ok": False,
+                "error": f"引擎运行中（PID {pid}），先停止平台再切换，"
+                         "或用 restart:true 一键重启切换（纸面账本会重置）"}
+    try:
+        with open(CONFIG_PATH, encoding="utf-8") as f:
+            text = f.read()
+        new_text, n = re.subn(
+            r'("strategy"\s*:\s*\{[^}]*?"name"\s*:\s*")[^"]*(")',
+            lambda m: m.group(1) + name + m.group(2), text, count=1)
+        if n != 1:
+            return {"ok": False, "error": "config.py 里没找到 strategy.name，写回失败"}
+        with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            f.write(new_text)
+    except Exception as e:
+        return {"ok": False, "error": f"config.py 写回失败：{str(e)[:150]}"}
+    try:
+        import importlib
+        import config as cfg_mod
+        importlib.reload(cfg_mod)
+        now_name = (cfg_mod.CONFIG.get("strategy") or {}).get("name")
+    except Exception as e:
+        return {"ok": False, "error": f"config.py 重新导入失败：{str(e)[:150]}"}
+    if now_name != name:
+        return {"ok": False, "error": f"写回后验证失败：config 仍是 {now_name}"}
+    if pid and restart:
+        stop_platform()
+        started = start_platform()
+        if not started.get("ok"):
+            return {"ok": False, "name": name, "restarted": False,
+                    "error": f"策略已切为 {name}，但重启启动失败：{started.get('error')}"}
+        return {"ok": True, "name": name, "restarted": True, "pid": started.get("pid"),
+                "note": "纸面账本已重置：引擎重启后持仓与当日盈亏从头算（ledger 为内存态）"}
+    return {"ok": True, "name": name, "restarted": False}
 
 
 # ---------- 钱包 ----------
@@ -611,6 +680,9 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(200, start_platform())
             elif p == "/api/platform/stop":
                 self._send_json(200, stop_platform())
+            elif p == "/api/strategy":
+                self._send_json(200, set_strategy(params.get("name"),
+                                                  bool(params.get("restart"))))
             elif p == "/api/backtest":
                 self._send_json(200, run_backtest(params if isinstance(params, dict) else {}))
             elif p == "/api/binance/refresh":

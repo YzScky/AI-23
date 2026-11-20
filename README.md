@@ -1,9 +1,18 @@
 # Polymarket 量化平台（Mac 版，纸面模式）
 
 ## 现在是什么状态
-- 策略：`observe_only`（占位，只观察不下单，策略按你的决定放最后）
+- 策略：`observe_only`（占位，只观察不下单，策略按你的决定放最后）；另有篮球低吸 `scalp_dip`（见下），默认不开，看板里选
 - 钱包：没接。先跑 `link_wallet.py` 链接（只读验证）。实盘开关 `live_trading: false`，强行开会直接报错停住；下单默认 dry-run，实盘要 `--live` + `--confirm` + 开关三重确认
 - 跑通的是：Gamma 发现市场 → CLOB REST 种子盘口 → CLOB WebSocket 实时盘口 → 引擎算双边和 → 纸面账本 + 风控；钱包链接走官方 py-clob-client-v2（L1 派生凭证 + L2 查余额/挂单/下单）
+
+## 策略：篮球低吸 scalp_dip（NBA 比赛盘，纸面模式）
+- 时点表：T0=开球时间（Gamma 事件 `startTime`；注意市场 `startDate` 是上架时间，不能当 T0）→ T0-60s 两队各挂 0.30 买单 30 份 → 任一侧成交撤另一侧、该侧挂 0.40 卖单 → T0+60s 无成交全撤 → 赛中（Q1 至 Q4 比赛时钟剩 5:00）任一队卖价 ≤0.30 低吸 30 份 → 触及 0.40 落袋 +$3.00 → Q4 比赛时钟剩 2:00 仍未到 0.40 就市价平掉，不持有到终场。
+- 双边同时成交锁利 +$12.00；比赛筛选默认开（只做弱队赛前价 0.25–0.40 的局）；日亏熔断沿用 `risk.daily_loss_cap`。
+- 比赛时钟走 ESPN 公开记分牌（`quant_platform/nba_clock.py`，无需 key，15 秒节流）；时钟缺失时不新开仓。终场按胜负结算（赢 1.00 / 输 0.00），加时不特殊处理。
+- 参数全在 `config.py` 的 `strategy.scalp_dip`（bid_price/target/size/pregame_window_s/entry_cutoff_q4_clock_s/exit_q4_clock_s/underdog_min/underdog_max/game_filter）。
+- 看板里选：控制台预测区「策略管理」点「切换到此策略（模拟）」（引擎在跑时一键重启切换，纸面账本会重置）；或调 `POST /api/strategy {"name": "scalp_dip", "restart": true}`。
+- 终端跑：`.venv/bin/python run.py --duration 28800 --markets 20 --poll 5`（一晚比赛 8 小时；看板启动 scalp_dip 时自动用 28800）。日志看 `platform.log` 里 `[SCALP]` 开头的行。
+- 状态：未回测。策略自管执行（自己管状态机、自己记账，`on_book` 永远返回 `[]`），不走 Order 双边对模型。单测：`python3 test_scalp.py`（10 项，假时钟 + 合成盘口，不碰网络）。
 
 ## Mac 上跑（三步）
 1. 双击 `install.command`（第一次装依赖，装一次就行）

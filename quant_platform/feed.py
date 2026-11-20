@@ -26,34 +26,62 @@ def get_json(url, params=None, timeout=15):
     return r.json()
 
 
+def _parse_ts(s):
+    """ISO 时间 -> epoch 秒，解析失败返回 None。"""
+    if not s:
+        return None
+    try:
+        from datetime import datetime
+        return datetime.fromisoformat(str(s).replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
+
+
 def discover_markets(tags, min_liquidity=1000, max_markets=20):
-    """返回 [{market_id, question, token_a, token_b, liquidity, fee_rate}]，按流动性取前 N。"""
+    """返回 [{market_id, question, token_a, token_b, liquidity, fee_rate,
+    tag, start_ts}]，按流动性取前 N。
+    注意：Gamma /events 按流动性排序，NBA 比赛盘排在期货盘后面（实测：
+    tag_slug=nba 前 100 条全是 2027 冠军这类期货盘，58 场球赛在第 2 页），
+    所以必须翻页拉（最多 5 页），只拉 1 页永远发现不了比赛盘。
+    start_ts = 事件 startTime（真正开球时间，UTC）；市场 startDate 是上架时间
+    （实测：11-11 上架 11-25 的比赛），绝不能当开球时间用。startTime 缺失
+    时 start_ts 为 None，策略会跳过这场。"""
     seen = {}
     for tag in tags:
-        try:
-            evs = get_json(f"{GAMMA}/events", {"tag_slug": tag, "limit": 100, "closed": "false"})
-        except Exception:
-            continue
-        for ev in evs:
-            for m in ev.get("markets", []) or []:
-                if m.get("question") != ev.get("title"):
-                    continue
-                toks = json.loads(m.get("clobTokenIds") or "[]")
-                if len(toks) != 2:
-                    continue
-                liq = m.get("liquidityClob") or 0
-                if liq < min_liquidity:
-                    continue
-                fs = m.get("feeSchedule") or {}
-                seen[m["id"]] = {
-                    "market_id": m["id"],
-                    "question": m["question"],
-                    "condition_id": m.get("conditionId"),
-                    "token_a": toks[0],
-                    "token_b": toks[1],
-                    "liquidity": liq,
-                    "fee_rate": fs.get("rate", 0.05),
-                }
+        offset = 0
+        for _page in range(5):
+            try:
+                evs = get_json(f"{GAMMA}/events", {"tag_slug": tag, "limit": 100,
+                                                    "closed": "false", "offset": offset})
+            except Exception:
+                break
+            if not evs:
+                break
+            for ev in evs:
+                for m in ev.get("markets", []) or []:
+                    if m.get("question") != ev.get("title"):
+                        continue
+                    toks = json.loads(m.get("clobTokenIds") or "[]")
+                    if len(toks) != 2:
+                        continue
+                    liq = m.get("liquidityClob") or 0
+                    if liq < min_liquidity:
+                        continue
+                    fs = m.get("feeSchedule") or {}
+                    seen[m["id"]] = {
+                        "market_id": m["id"],
+                        "question": m["question"],
+                        "condition_id": m.get("conditionId"),
+                        "token_a": toks[0],
+                        "token_b": toks[1],
+                        "liquidity": liq,
+                        "fee_rate": fs.get("rate", 0.05),
+                        "tag": tag,
+                        "start_ts": _parse_ts(ev.get("startTime")),
+                    }
+            if len(evs) < 100:
+                break
+            offset += 100
     return sorted(seen.values(), key=lambda x: -x["liquidity"])[:max_markets]
 
 
@@ -219,4 +247,5 @@ class MarketFeed:
         return {"market_id": market_id, "question": m["question"],
                 "a_bid": a["bid"], "a_ask": a["ask"],
                 "b_bid": b["bid"], "b_ask": b["ask"],
-                "fee_rate": m["fee_rate"]}
+                "fee_rate": m["fee_rate"], "tag": m.get("tag"),
+                "start_ts": m.get("start_ts")}

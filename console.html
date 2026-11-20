@@ -187,18 +187,20 @@ button.mini{padding:4px 12px;font-size:12px}
         <h3>AI 自动执行 <span class="sub tag tag-green" style="font-weight:500">运行中 · 模拟</span></h3>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
           <span style="font-size:12px;color:var(--tx2);white-space:nowrap">当前策略</span>
-          <select style="flex:1"><option>v8 · 5信号共振（运行中）</option><option>v7 · 收敛过滤（待命）</option><option>v6 · 单信号触发（已停用）</option></select>
+          <select id="ai-strat-select" style="flex:1"><option>加载中…</option></select>
         </div>
-        <div class="check"><span>策略规则</span><span class="num">两腿和 ≤0.95 吃双边</span></div>
+        <div class="check"><span>策略规则</span><span class="num">加载中…</span></div>
         <div class="check"><span>决策模型</span><span class="num">deepseek-reasoner · 240ms</span></div>
         <div class="check"><span>决策频率</span><span class="num">每窗口滚动评估</span></div>
         <div class="check"><span>今日 AI 交易</span><span class="num">9 窗 ｜ 拒单 5 窗</span></div>
         <div class="check"><span>双边率（今日）</span><span class="num">68%</span></div>
         <h3 style="margin-top:12px">执行参数 <span class="sub">来自策略模块 · 只读</span></h3>
+        <div id="ai-exec-params">
         <div class="check"><span>单窗投入上限</span><span class="num">$50</span></div>
         <div class="check"><span>补腿等待</span><span class="num">5 分钟超时出场</span></div>
         <div class="check"><span>单边止损</span><span class="num">时间止损 · 绝不拖结算</span></div>
         <div class="check"><span>日亏损熔断</span><span class="num">$86 / $150 已用</span></div>
+        </div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button style="flex:1;background:var(--wnbg);color:var(--wn);border-color:#e5b96b;font-weight:500">暂停 AI（模拟）</button>
           <button style="flex:1">恢复</button>
@@ -335,48 +337,25 @@ button.mini{padding:4px 12px;font-size:12px}
   </section>
 
   <section class="page" id="p-poly-strat">
-    <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
-      <div class="card" style="border-color:#993556">
-        <h3>v8 · 5信号共振 <span class="tag tag-green">运行中</span></h3>
-        <div class="check"><span>规则</span><span class="num">两腿和 ≤0.95 吃双边</span></div>
-        <div class="check"><span>补腿 / 止损</span><span class="num">5min 超时 · 时间止损</span></div>
-        <div class="check"><span>近30天（扣费）</span><span class="num up">+5.2% ｜ 双边率 68%</span></div>
-        <div class="check"><span>手续费占毛利</span><span class="num dn">31%</span></div>
-        <button style="width:100%;margin-top:10px;background:var(--bg2)">查看回测详情</button>
-      </div>
-      <div class="card">
-        <h3>v7 · 收敛过滤 <span class="tag tag-gray">待命</span></h3>
-        <div class="check"><span>规则</span><span class="num">3信号收敛 + 价位白名单</span></div>
-        <div class="check"><span>补腿 / 止损</span><span class="num">3min 超时 · 0.20 止损</span></div>
-        <div class="check"><span>近30天（扣费）</span><span class="num up">+2.1% ｜ 双边率 54%</span></div>
-        <div class="check"><span>手续费占毛利</span><span class="num dn">38%</span></div>
-        <button style="width:100%;margin-top:10px">切换到此策略（模拟）</button>
-      </div>
-      <div class="card" style="opacity:.6">
-        <h3>v6 · 单信号触发 <span class="tag tag-red">已停用</span></h3>
-        <div class="check"><span>规则</span><span class="num">任一信号亮即开仓</span></div>
-        <div class="check"><span>停用原因</span><span class="num dn">单边率过高 · 净亏</span></div>
-        <div class="check"><span>近30天（扣费）</span><span class="num dn">-11.4% ｜ 双边率 22%</span></div>
-        <div class="check"><span>手续费占毛利</span><span class="num dn">61%</span></div>
-        <button style="width:100%;margin-top:10px" disabled>已停用 · 数据留档</button>
-      </div>
+    <div class="grid" id="strat-cards" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
+      <div class="card"><h3>策略管理</h3><div style="color:var(--tx3);font-size:12px">策略列表加载中…（需后端 /api/config）</div></div>
     </div>
+    <div id="strat-msg" style="color:var(--tx3);font-size:12px;margin-bottom:12px"></div>
     <div class="card" style="margin-bottom:12px">
-      <h3>策略对比 <span class="sub">同一数据集回放 ｜ 全部含手续费</span></h3>
+      <h3>策略对比 <span class="sub">真实状态 ｜ 不编造回测数字</span></h3>
       <table>
         <tr><th style="width:16%">策略</th><th style="width:12%">交易窗数</th><th style="width:12%">双边率</th><th style="width:14%">总盈亏</th><th style="width:14%">最大回撤</th><th style="width:16%">手续费占毛利</th><th>结论</th></tr>
-        <tr><td>v8 共振</td><td class="num">312</td><td class="num up">68%</td><td class="num up">+$164</td><td class="num">2.1%</td><td class="num">31%</td><td style="color:var(--tx3)">当前最优 · 双边率最高</td></tr>
-        <tr><td>v7 收敛</td><td class="num">486</td><td class="num">54%</td><td class="num up">+$67</td><td class="num">3.8%</td><td class="num">38%</td><td style="color:var(--tx3)">交易多但单边亏拖累</td></tr>
-        <tr><td>v6 单信号</td><td class="num">1,104</td><td class="num dn">22%</td><td class="num dn">-$386</td><td class="num">9.4%</td><td class="num dn">61%</td><td style="color:var(--tx3)">被手续费+单边双重拖死</td></tr>
+        <tbody id="strat-compare-body">
+        <tr><td colspan="7" style="color:var(--tx3);text-align:center;padding:14px">策略对比加载中…（需后端 /api/config）</td></tr>
+        </tbody>
       </table>
-      <div style="color:var(--tx3);font-size:11px;margin-top:8px">切换策略前强制跑同数据集回放对比；上线前须在模拟盘连续盈利 ≥7 天（风控准入项）。</div>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">切换策略后纸面账本重置（ledger 为内存态，重启即清零）。scalp_dip 尚未回测，请勿用回测数字评估它。</div>
     </div>
     <div class="card">
       <h3>策略切换记录 <span class="sub">谁在什么时候切了什么</span></h3>
       <table>
         <tr><th style="width:16%">时间</th><th style="width:20%">变更</th><th>原因</th></tr>
-        <tr><td class="num">11-14 09:00</td><td>v7 → v8</td><td style="color:var(--tx3)">回放对比：双边率 54%→68%，模拟盘 5 天连盈达标</td></tr>
-        <tr><td class="num">11-06 15:20</td><td>v6 停用</td><td style="color:var(--tx3)">模拟盘连续 3 日净亏，手续费占毛利 &gt; 60%</td></tr>
+        <tr><td colspan="3" style="color:var(--tx3);text-align:center;padding:14px">暂无切换记录 —— 切换后这里记录（当前版本不保存历史）</td></tr>
       </table>
     </div>
   </section>
@@ -1206,7 +1185,7 @@ function renderStatus(d){
     const fr=checkRow(ai,"决策频率");
     if(fr){const v=fr.querySelector("span:last-child");if(v)v.textContent=(hb.updates_per_s||0)+" 次盘口更新/秒";}
     const tr=checkRow(ai,"今日 AI 交易");
-    if(tr){const v=tr.querySelector("span:last-child");if(v)v.textContent=(hb.trades||0)+" 笔成交（observe_only 策略）";}
+    if(tr){const v=tr.querySelector("span:last-child");if(v)v.textContent=(hb.trades||0)+" 笔成交（"+(LIVE.cfg&&LIVE.cfg.strategy_name||"—")+" 策略）";}
     const pause=Array.from(ai.querySelectorAll("button")).find(x=>x.textContent.includes("暂停"));
     const resume=Array.from(ai.querySelectorAll("button")).find(x=>x.textContent.includes("恢复"));
     const ctl=async(u,label)=>{
@@ -1253,7 +1232,7 @@ function renderStatus(d){
     if(tb){
       const n=hb.trades||0;
       tb.innerHTML=`<tr><th style="width:18%">窗口</th><th style="width:10%">腿</th><th style="width:10%">份数</th><th style="width:11%">成本</th><th style="width:11%">现价</th><th style="width:11%">盈亏</th><th style="width:14%">状态</th><th>操作</th></tr>`
-        +(n>0?emptyRow(8,"账本已有 "+n+" 笔成交，持仓明细待 ledger 接口接入"):emptyRow(8,"策略 observe_only · 暂无持仓（引擎产生成交后，这里显示纸面账本持仓）"));
+        +(n>0?emptyRow(8,"账本已有 "+n+" 笔成交，持仓明细待 ledger 接口接入"):emptyRow(8,"策略 "+(LIVE.cfg&&LIVE.cfg.strategy_name||"—")+" · 暂无持仓（引擎产生成交后，这里显示纸面账本持仓）"));
     }
   }
 }
@@ -1334,6 +1313,7 @@ function renderWallet(d){
 /* ---------- 配置（/api/config） ---------- */
 function renderCfg(c){
   const cfg=c&&c.config;if(!cfg||cfg.error)return;
+  LIVE.cfg=cfg;
   const env=card("#p-keys","环境配置");
   if(env){
     const m=checkRow(env,"TRADING_MODE");
@@ -1349,6 +1329,98 @@ function renderCfg(c){
   if(mc){
     const tag=mc.querySelector(".tag.tag-amber");
     if(tag)tag.textContent="当前："+(cfg.mode==="paper"?"模拟盘（config.py · paper）":"实盘");
+  }
+  renderStrategyUI(cfg);
+}
+
+/* ---------- 策略管理（/api/config -> 预测区） ---------- */
+/* 策略名和参数一律来自后端（STRATEGIES 注册表 + /api/config），前端不写死。 */
+function stratLabel(name){
+  return name==="scalp_dip"?"篮球低吸 · NBA":name==="observe_only"?"观察 · 只看不交易":name;
+}
+function stratRulesText(cfg){
+  const p=cfg.strategy_params||{};
+  if(cfg.strategy_name==="scalp_dip"){
+    return "0.30 低吸 × "+(p.size||30)+" 份 → 0.40 落袋 · Q4 剩 "+Math.round((p.exit_q4_clock_s||120)/60)+":00 出场";
+  }
+  if(cfg.strategy_name==="observe_only")return "只观察 · 不下单";
+  return "—";
+}
+function stratParamRows(cfg){
+  const p=cfg.strategy_params||{};
+  const cap=(cfg.risk&&cfg.risk.daily_loss_cap!=null)?cfg.risk.daily_loss_cap:"—";
+  if(cfg.strategy_name==="scalp_dip"){
+    return [
+      ["买入价","0.30（两队各 "+(p.size||30)+" 份）"],
+      ["落袋目标","0.40（maker，手续费 0）"],
+      ["赛中开仓截止","Q4 比赛时钟剩 "+Math.round((p.entry_cutoff_q4_clock_s||300)/60)+":00"],
+      ["出场","Q4 比赛时钟剩 "+Math.round((p.exit_q4_clock_s||120)/60)+":00 市价平掉"],
+      ["比赛筛选",p.game_filter?("弱队赛前价 "+p.underdog_min+"–"+p.underdog_max):"已关闭"],
+      ["日亏损熔断","上限 $"+cap],
+    ];
+  }
+  return [["模式","只观察 · 不下单"],["日亏损熔断","上限 $"+cap]];
+}
+async function switchStrategy(name){
+  const msg=$("#strat-msg");
+  if(msg)msg.textContent="切换中…";
+  try{
+    const r=await jpost("/api/strategy",{name:name,restart:true});
+    if(r.ok){
+      if(msg)msg.textContent="已切换到 "+name+(r.restarted?"（引擎已重启，新 PID "+r.pid+"）":"")+(r.note?" · "+r.note:"");
+      tickCfg();
+    }else{
+      if(msg)msg.textContent="切换失败："+(r.error||"未知错误");
+      tickCfg();
+    }
+  }catch(e){if(msg)msg.textContent="切换失败：后端不可达";tickCfg();}
+}
+function renderStrategyUI(cfg){
+  const names=cfg.strategies||[];
+  const cur=cfg.strategy_name;
+  // AI 卡片 select：选项全部来自后端，选中当前策略
+  const sel=$("#ai-strat-select");
+  if(sel){
+    sel.innerHTML=names.map(n=>"<option value=\""+esc(n)+"\">"+esc(stratLabel(n))+"</option>").join("");
+    sel.value=cur||"";
+    sel.onchange=()=>{if(sel.value&&sel.value!==cur)switchStrategy(sel.value);else tickCfg();};
+  }
+  // AI 卡片「策略规则」+「执行参数」：按当前策略从 /api/config 渲染
+  const ai=card("#p-poly-term","AI 自动执行");
+  if(ai){
+    const rr=checkRow(ai,"策略规则");
+    if(rr){const v=rr.querySelector("span:last-child");if(v)v.textContent=stratRulesText(cfg);}
+    const ep=$("#ai-exec-params");
+    if(ep)ep.innerHTML=stratParamRows(cfg).map(r=>"<div class=\"check\"><span>"+esc(r[0])+"</span><span class=\"num\">"+esc(r[1])+"</span></div>").join("");
+  }
+  // 策略管理卡片：每张卡来自后端 strategies 列表，参数来自 strategy_params
+  const box=$("#strat-cards");
+  if(box){
+    box.innerHTML=names.map(n=>{
+      const isCur=n===cur;
+      const p=cfg.strategy_params||{};
+      const rules=n==="scalp_dip"
+        ?"0.30 低吸 × "+(p.size||30)+" 份 → 0.40 落袋 · Q4 剩 "+Math.round((p.exit_q4_clock_s||120)/60)+":00 出场 · 弱队赛前 "+p.underdog_min+"–"+p.underdog_max
+        :n==="observe_only"?"只观察盘口，不下任何单":"—";
+      const status=n==="scalp_dip"?"未回测":n==="observe_only"?"无交易":"—";
+      return "<div class=\"card\""+(isCur?" style=\"border-color:#993556\"":"")+">"
+        +"<h3>"+esc(n)+" · "+esc(stratLabel(n))+" "+(isCur?"<span class=\"tag tag-green\">运行中</span>":"")+"</h3>"
+        +"<div class=\"check\"><span>规则</span><span class=\"num\">"+esc(rules)+"</span></div>"
+        +"<div class=\"check\"><span>状态</span><span class=\"num\">"+esc(status)+"</span></div>"
+        +"<button style=\"width:100%;margin-top:10px\""+(isCur?" disabled":"")+" data-strat=\""+esc(n)+"\">"
+        +(isCur?"当前策略":"切换到此策略（模拟）")+"</button></div>";
+    }).join("");
+    box.querySelectorAll("button[data-strat]").forEach(b=>{
+      b.onclick=()=>switchStrategy(b.getAttribute("data-strat"));
+    });
+  }
+  // 策略对比：真实状态，不编数字
+  const tb=$("#strat-compare-body");
+  if(tb){
+    tb.innerHTML=names.map(n=>{
+      const concl=n==="observe_only"?"只观察，不交易":n==="scalp_dip"?"未回测 —— 上线前先做回测验证":"—";
+      return "<tr><td>"+esc(n)+"</td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td style=\"color:var(--tx3)\">"+esc(concl)+"</td></tr>";
+    }).join("");
   }
 }
 

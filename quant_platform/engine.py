@@ -16,7 +16,9 @@ class Engine:
             raise RuntimeError("实盘执行未接好：live_trading 只能在钱包和 API 凭证配好、参数确认后手动开启")
         self.ledger = PaperLedger(cfg["risk"]["total_capital"])
         self.risk = RiskManager(cfg)
-        self.strategy = STRATEGIES[cfg["strategy"]["name"]]()
+        strat_name = cfg["strategy"]["name"]
+        # 策略参数从 config 的 strategy.<name> 节透传（scalp_dip 的时点表全在这里）
+        self.strategy = STRATEGIES[strat_name](cfg["strategy"].get(strat_name))
         self.best_buy = (None, None)
         self.best_sell = (None, None)
         self.log_path = os.path.join(os.path.dirname(__file__), "..", "platform.log")
@@ -42,7 +44,10 @@ class Engine:
             s = a_bid + b_bid
             if self.best_sell[0] is None or s > self.best_sell[0]:
                 self.best_sell = (round(s, 4), state["question"])
-        orders = self.strategy.on_book(state, {"ledger": self.ledger, "risk": self.risk})
+        # 策略自管执行（如 scalp_dip）用 ctx["log"] 写 [SCALP] 日志进 platform.log：
+        # 看板启动的 run.py stdout 是 DEVNULL，只 print 会丢日志。
+        orders = self.strategy.on_book(state, {"ledger": self.ledger, "risk": self.risk,
+                                               "log": self._log, "ts": ts})
         for o in orders:
             ok, reason = self.risk.check(self.ledger, o.size)
             if not ok:
@@ -89,7 +94,9 @@ class Engine:
 
     def run(self, duration):
         mk = self.cfg["markets"]
-        markets = discover_markets(mk["tags"], mk["min_liquidity"], mk["max_markets"])
+        # 策略自带 tags（如 scalp_dip 只做 nba）时用策略的，否则用 config 的
+        tags = getattr(self.strategy, "tags", None) or mk["tags"]
+        markets = discover_markets(tags, mk["min_liquidity"], mk["max_markets"])
         self._log(f"[BOOT] mode={self.cfg['mode']} live={self.live} "
                   f"strategy={self.strategy.name} markets={len(markets)}")
         if self.cfg.get("history", True):
