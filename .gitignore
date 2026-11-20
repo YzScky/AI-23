@@ -7,3 +7,4 @@ history.db.bak
 platform.pid
 backtest_trades.jsonl
 .env
+nba_backtest_data/

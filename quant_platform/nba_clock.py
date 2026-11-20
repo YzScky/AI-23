@@ -21,6 +21,12 @@ Gamma 比赛盘形态（同日实测，见 feed.py 注释）：
   fee rate 0.05（体育）。市场 startDate 是上架时间（11-11 上架 11-25 的比赛），
   真正开球时间在事件的 startTime（2026-11-26T01:30:00Z）/ eventDate。
   所以 T0 只能用 startTime，绝不能用 startDate。
+
+缩写注意（2026-11-20 回测时实测）：ESPN 记分牌的 abbreviation 是
+GS/NY/NO/SA/UTAH/WSH，Gamma/Polymarket 用 GSW/NYK/NOP/SAS/UTA/WAS；
+_load_date 里用 ESPN_TO_CANON 归一到规范形式再建索引，否则勇士/尼克斯/
+鹈鹕/马刺/爵士/奇才这 6 队的比赛 get_game 永远查不到（时钟缺失，
+策略 fail-closed 不新开仓）。
 """
 import time
 
@@ -68,6 +74,13 @@ for _abbr in ("ATL", "BOS", "BKN", "CHA", "CHI", "CLE", "DAL", "DEN", "DET",
               "NOP", "NYK", "OKC", "ORL", "PHI", "PHX", "POR", "SAC", "SAS",
               "TOR", "UTA", "WAS"):
     TEAM_ALIASES.setdefault(_abbr, _abbr)
+
+# ESPN 记分牌 abbreviation -> 规范缩写（实测 2026-11-19/20：
+# ESPN 用 GS、NY、NO、SA、UTAH、WSH；Gamma/Polymarket 用
+# GSW、NYK、NOP、SAS、UTA、WAS）。_load_date 里归一到规范形式，
+# 否则 get_game("GSW", ...) 查不到勇士的比赛，时钟一直缺失。
+ESPN_TO_CANON = {"GS": "GSW", "NY": "NYK", "NO": "NOP",
+                 "SA": "SAS", "UTAH": "UTA", "WSH": "WAS"}
 
 
 def parse_teams(question):
@@ -140,6 +153,9 @@ class NbaClock:
                     abbr = tm.get("abbreviation")
                     if not abbr:
                         continue
+                    # ESPN 缩写归一到规范形式（见 ESPN_TO_CANON），
+                    # 否则缓存键和 get_game/parse_teams 的规范缩写对不上。
+                    abbr = ESPN_TO_CANON.get(abbr, abbr)
                     try:
                         score = int(c.get("score"))
                     except (TypeError, ValueError):

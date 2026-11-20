@@ -12,7 +12,13 @@
 - 参数全在 `config.py` 的 `strategy.scalp_dip`（bid_price/target/size/pregame_window_s/entry_cutoff_q4_clock_s/exit_q4_clock_s/underdog_min/underdog_max/game_filter）。
 - 看板里选：控制台预测区「策略管理」点「切换到此策略（模拟）」（引擎在跑时一键重启切换，纸面账本会重置）；或调 `POST /api/strategy {"name": "scalp_dip", "restart": true}`。
 - 终端跑：`.venv/bin/python run.py --duration 28800 --markets 20 --poll 5`（一晚比赛 8 小时；看板启动 scalp_dip 时自动用 28800）。日志看 `platform.log` 里 `[SCALP]` 开头的行。
-- 状态：未回测。策略自管执行（自己管状态机、自己记账，`on_book` 永远返回 `[]`），不走 Order 双边对模型。单测：`python3 test_scalp.py`（10 项，假时钟 + 合成盘口，不碰网络）。
+- 状态：已回测（见下，2026-11-20，过去 7 天 52 场）。策略自管执行（自己管状态机、自己记账，`on_book` 永远返回 `[]`），不走 Order 双边对模型。单测：`python3 test_scalp.py`（10 项，假时钟 + 合成盘口，不碰网络）。
+
+## 回测：scalp_dip（NBA，过去打完的比赛）
+- 命令：`python3 backtest_nba.py`（过去 7 天全量，先拉数据再重放；结果写 `nba_backtest_results.json`）；`--games 5` 最近 5 场小样本；`--fetch-only` 只拉数据；`--no-fetch` 只用缓存重放。离线单测：`python3 test_backtest_nba.py`（3 项，合成两场假比赛，不碰网络）。
+- 数据源（只读）：ESPN 记分牌（按美东日期找已打完的比赛）→ Gamma slug（`nba-<客>-<主>-<美东日期>`，moneyline 市场）→ CLOB `/prices-history`（两边 token 价格历史；注意端点带连字符，`/prices/history` 是 404）→ ESPN summary plays（时钟线）。原始数据缓存到 `nba_backtest_data/`，重跑不再重复拉。
+- 粒度：开球 <24h 前 1 分钟，<7 天 5 分钟，更老 10 分钟。价格序列每时间点只有一个价，回测里同时当 bid 和 ask 用（忽略点差，会轻微高估成交率）；粗粒度会漏掉短暂触及，触及概率是下限。
+- 2026-11-20 回测结果（过去 7 天，52 场，0 场跳过）：入场 24 腿（赛前 6 / 赛中低吸 18），摸到 0.40 落袋 13 次（+39.00），Q4 剩 2:00 市价出 8 次（-67.40，出场价基本是 0.00–0.09），终场结算 1 赢 2 输（+3.00），双边锁利 0 次。**关键数 P(0.30 成交 → Q4 剩 2:00 前摸到 0.40) = 0.5417（13/24），总盈亏 -25.38，每场平均 -0.49，每成交腿平均 -1.06，最大单场亏损 -9.00。** 结论：触及概率过半，但盈亏不对称（赢一腿 +3.00，输一腿平均 -8.43），期望仍是负的。
 
 ## Mac 上跑（三步）
 1. 双击 `install.command`（第一次装依赖，装一次就行）
