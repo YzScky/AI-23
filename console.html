@@ -1487,12 +1487,10 @@ function renderPaper(d){
   const ps=g("paper-positions");
   if(ps){
     const prow=pos=>`<tr><td>${esc(pos.symbol)}</td><td style="color:var(--dn)">多</td><td class="num">${fmt(pos.amt)}</td><td class="num">${fmt(pos.entry)}</td><td class="num">${fmt(pos.mark)}</td><td class="num">${pos.lev}x</td><td class="num ${pos.pnl>=0?"up":"dn"}">${pos.pnl>=0?"+":""}${fmt(pos.pnl)}</td></tr>`;
-    ps.innerHTML=`<tr><th>合约</th><th>方向</th><th>数量</th><th>开仓价</th><th>现价</th><th>杠杆</th><th>浮动盈亏</th></tr>`
-      +((p.positions||[]).map(prow).join("")||`<tr><td colspan="7" style="color:var(--tx3)">当前没有虚拟持仓——策略评分达标后自动开仓</td></tr>`);
+    ps.innerHTML=`<tr><th>合约</th><th>方向</th><th>数量</th><th>开仓价</th><th>现价</th><th>杠杆</th><th>浮动盈亏</th></tr>`+(p.positions||[]).map(prow).join("");
   }
   const rows=(p.trades||[]).slice().reverse().map(t=>`<tr><td class="num">${esc(t.ts)}</td><td>${esc(t.symbol)}</td><td class="num">${fmt(t.entry)}</td><td class="num">${fmt(t.exit)}</td><td class="num">${t.lev}x</td><td class="num">${fmt(t.hold_min)}m</td><td class="num ${t.pnl>=0?"up":"dn"}">${t.pnl>=0?"+":""}${fmt(t.pnl)}</td></tr>`).join("");
-  g("paper-trades").innerHTML=`<tr><th>平仓时间</th><th>合约</th><th>开仓价</th><th>平仓价</th><th>杠杆</th><th>持仓</th><th>盈亏(含费)</th></tr>`
-    +(rows||`<tr><td colspan="7" style="color:var(--tx3)">还没有平仓记录——虚拟仓开了之后这里出流水</td></tr>`);
+  g("paper-trades").innerHTML=`<tr><th>平仓时间</th><th>合约</th><th>开仓价</th><th>平仓价</th><th>杠杆</th><th>持仓</th><th>盈亏(含费)</th></tr>`+rows;
 }
 async function tickWallet(){try{renderWallet(await jget("/api/wallet"));}catch(e){}}
 async function tickLogs(){try{renderLogs(await jget("/api/logs"));}catch(e){}}
