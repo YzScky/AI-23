@@ -9,14 +9,15 @@ ZZZZM 移植版 · 已修两处：
 - 市场扫描: 前20名涨幅币种评分排序
 """
 import json, subprocess, os, sys, time, hashlib, hmac, urllib.request
+import requests
 from datetime import datetime
 from collections import Counter
 
 # 代理可切换：默认直连；需要代理时设环境变量 BINANCE_PROXY=socks5://127.0.0.1:7891
+# 代理可切换：BINANCE_PROXY 环境变量（如 http://127.0.0.1:7891 或 socks5://...）
 PROXY = os.environ.get("BINANCE_PROXY", "")
-CURLE = ["curl", "-s", "--connect-timeout", "5", "--max-time", "10"]
-if PROXY:
-    CURLE += ["--socks5-hostname", PROXY.split("://")[-1]]
+PROXIES = {"http": PROXY, "https": PROXY} if PROXY else None
+SESSION = requests.Session()
 
 def _load_keys():
     with open(os.path.expanduser("~/.binance/trading")) as f:
@@ -34,23 +35,15 @@ def sign_request(params_str):
     return hmac.new(SECRET.encode(), params_str.encode(), hashlib.sha256).hexdigest()
 
 def _curl_auth(method, path, data_str=None):
-    """Use curl+SOCKS5 for authenticated Binance API calls (urllib doesn't support SOCKS5)."""
+    """签名 API 请求（requests 版：部分 Mac 环境 curl 被运营商拦截，requests 可直连）。"""
     ts = int(time.time()*1000)
-    if data_str:
-        qs = f"{data_str}&timestamp={ts}&recvWindow=50000"
-    else:
-        qs = f"timestamp={ts}&recvWindow=50000"
+    qs = (f"{data_str}&" if data_str else "") + f"timestamp={ts}&recvWindow=50000"
     sig = sign_request(qs)
     url = f"https://fapi.binance.com{path}?{qs}&signature={sig}"
-    cmd = CURLE + ["-H", f"X-MBX-APIKEY: {API_KEY}"]
-    if method == "POST":
-        cmd += ["-X", "POST"]
-    cmd.append(url)
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
-        if r.stdout.strip():
-            return json.loads(r.stdout)
-        return {"error": f"Empty response: {r.stderr[:200]}"}
+        r = SESSION.request(method, url, headers={"X-MBX-APIKEY": API_KEY},
+                            timeout=15, proxies=PROXIES)
+        return r.json()
     except Exception as e:
         return {"error": str(e)}
 
@@ -61,11 +54,12 @@ def api_post(path, data_str):
     return _curl_auth("POST", path, data_str)
 
 def curl_get(url):
+    """公开行情 GET（requests 版）。"""
     try:
-        r = subprocess.run(CURLE + [url], capture_output=True, text=True, timeout=15)
-        if r.stdout.strip(): return json.loads(r.stdout)
-    except: pass
-    return None
+        r = SESSION.get(url, timeout=15, proxies=PROXIES)
+        return r.json()
+    except Exception:
+        return None
 
 def get_account():
     data = api_get("/fapi/v2/account")
