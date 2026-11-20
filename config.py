@@ -20,6 +20,7 @@ CONFIG = {
         "scalp_dip": {
             "bid_price": 0.30,              # 挂单买入价（两队各 30 份）
             "target": 0.40,                 # 卖单落袋价（maker，手续费 0）
+            "price_stop": 0.10,             # 跌破止损价：市价平掉（taker 费），不等 Q4 出场
             "size": 30.0,                   # 每腿份数
             "pregame_window_s": 60,         # 赛前挂单窗口：T0-60s 至 T0+60s
             "entry_cutoff_q4_clock_s": 300,  # 赛中开仓截止：Q4 比赛时钟剩 5:00

@@ -114,6 +114,31 @@ def test_ingame_dip_then_q4_exit():
     assert has(logs, "Q4", "市价")
 
 
+def test_price_stop():
+    strat, ledger, risk, logs = make(clock=FakeClock(in_game(2, 600)))
+    # 赛中低吸成交：A 队卖价 0.29 买入，成本 8.70
+    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.28, a_ask=0.29, b_bid=0.70, b_ask=0.71)
+    assert len(ledger.legs) == 1 and ledger.cash == 991.0
+    # 跌到 0.10：触发止损，市价平掉；收 3.00，taker 费 0.05*30*0.10*0.90=0.14
+    book(strat, ledger, risk, logs, T0 + 3900, a_bid=0.10, a_ask=0.11, b_bid=0.89, b_ask=0.90)
+    assert len(ledger.legs) == 0
+    # 盈亏 3.00 - 0.14 - 9.00 = -6.14（进场按策略价 0.30 记，成本 9.00）；
+    # cash 991.0 + 3.00 - 0.14 = 993.86
+    assert abs(ledger.trades[-1]["locked_pnl"] + 6.135) < 0.01
+    assert abs(ledger.cash - 993.865) < 0.01
+    assert has(logs, "止损")
+    # 另一场：跌到 0.11 不触发止损，之后涨回 0.40 正常落袋
+    strat, ledger, risk, logs = make(clock=FakeClock(in_game(2, 600)))
+    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.28, a_ask=0.29, b_bid=0.70, b_ask=0.71)
+    book(strat, ledger, risk, logs, T0 + 3900, a_bid=0.11, a_ask=0.12, b_bid=0.88, b_ask=0.89)
+    assert len(ledger.legs) == 1, "0.11 高于止损价 0.10，不应平掉"
+    book(strat, ledger, risk, logs, T0 + 4200, a_bid=0.40, a_ask=0.41, b_bid=0.59, b_ask=0.60)
+    assert len(ledger.legs) == 0
+    # 落袋收 12.00，成本 9.00，盈亏 +3.00
+    assert abs(ledger.trades[-1]["locked_pnl"] - 3.00) < 0.01
+    assert has(logs, "落袋")
+
+
 def test_lock_pair():
     strat, ledger, risk, logs = make()
     book(strat, ledger, risk, logs, T0 - 30, a_bid=0.27, a_ask=0.28, b_bid=0.28, b_ask=0.29)

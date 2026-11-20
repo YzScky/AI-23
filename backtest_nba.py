@@ -83,7 +83,8 @@ def _price_at(pts, times, ts):
 
 
 _TAKE_RE = re.compile(r"触及 0\.40 落袋.*盈亏 ([+-][0-9.]+)")
-_Q4_RE = re.compile(r"Q4 剩 [0-9.]+s 未到 0\.40，市价 ([0-9.]+) 平掉.*盈亏 ([+-][0-9.]+)")
+_Q4_RE = re.compile(r"Q4 剩 [0-9]+s 未到 0\.40，市价 ([0-9.]+) 平掉.*盈亏 ([+-][0-9.]+)")
+_STOP_RE = re.compile(r"跌破止损 [0-9.]+，市价 ([0-9.]+) 平掉.*盈亏 ([+-][0-9.]+)")
 _SETTLE_RE = re.compile(r"终场结算：[AB]队(赢|输)，盈亏 ([+-][0-9.]+)")
 _LOCK_RE = re.compile(r"双边同时成交锁利.*锁定 ([+-][0-9.]+)")
 
@@ -137,6 +138,7 @@ def replay_game(game, strategy, clock, ledger, risk, log_list):
           "legs_opened": 0, "pregame_fills": 0, "ingame_fills": 0,
           "take_profits": 0, "take_profit_pnl": 0.0,
           "q4_exits": 0, "q4_exit_prices": [], "q4_exit_pnl": 0.0,
+          "stop_exits": 0, "stop_exit_prices": [], "stop_exit_pnl": 0.0,
           "settlements_win": 0, "settlements_loss": 0, "settlement_pnl": 0.0,
           "locks": 0, "lock_pnl": 0.0, "risk_blocked": 0,
           "pnl": 0.0, "trades": 0}
@@ -155,6 +157,12 @@ def replay_game(game, strategy, clock, ledger, risk, log_list):
             st["q4_exits"] += 1
             st["q4_exit_prices"].append(float(m.group(1)))
             st["q4_exit_pnl"] += float(m.group(2))
+            continue
+        m = _STOP_RE.search(l)
+        if m:
+            st["stop_exits"] += 1
+            st["stop_exit_prices"].append(float(m.group(1)))
+            st["stop_exit_pnl"] += float(m.group(2))
             continue
         m = _SETTLE_RE.search(l)
         if m:
@@ -236,6 +244,9 @@ def summarize(per_game, skipped):
          "q4_exits": sum(g["q4_exits"] for g in per_game),
          "q4_exit_prices": sorted(p for g in per_game for p in g["q4_exit_prices"]),
          "q4_exit_pnl": round(sum(g["q4_exit_pnl"] for g in per_game), 2),
+         "stop_exits": sum(g["stop_exits"] for g in per_game),
+         "stop_exit_prices": sorted(p for g in per_game for p in g["stop_exit_prices"]),
+         "stop_exit_pnl": round(sum(g["stop_exit_pnl"] for g in per_game), 2),
          "settlements_win": sum(g["settlements_win"] for g in per_game),
          "settlements_loss": sum(g["settlements_loss"] for g in per_game),
          "settlement_pnl": round(sum(g["settlement_pnl"] for g in per_game), 2),
@@ -244,7 +255,8 @@ def summarize(per_game, skipped):
          "risk_blocked": sum(g["risk_blocked"] for g in per_game),
          "total_pnl": round(sum(g["pnl"] for g in per_game), 2),
          "per_game": per_game}
-    filled = s["take_profits"] + s["q4_exits"] + s["settlements_win"] + s["settlements_loss"]
+    filled = (s["take_profits"] + s["q4_exits"] + s["stop_exits"]
+              + s["settlements_win"] + s["settlements_loss"])
     s["filled_legs"] = filled
     s["key_prob"] = (round(s["take_profits"] / filled, 4) if filled else None)
     s["avg_pnl_per_game"] = (round(s["total_pnl"] / len(per_game), 2) if per_game else 0.0)
@@ -275,6 +287,8 @@ def print_report(s):
     print(f"摸到 0.40 落袋：{s['take_profits']} 次，+{s['take_profit_pnl']:.2f}")
     print(f"Q4 剩 2:00 市价出：{s['q4_exits']} 次，{s['q4_exit_pnl']:+.2f}，"
           f"出场价 {s['q4_exit_prices']}")
+    print(f"跌破止损 0.10 市价出：{s['stop_exits']} 次，{s['stop_exit_pnl']:+.2f}，"
+          f"出场价 {s['stop_exit_prices']}")
     print(f"终场结算：赢 {s['settlements_win']} / 输 {s['settlements_loss']}，"
           f"{s['settlement_pnl']:+.2f}")
     if s['risk_blocked']:

@@ -39,6 +39,7 @@ class ObserveOnlyStrategy(Strategy):
 DEFAULT_SCALP_DIP = {
     "bid_price": 0.30,
     "target": 0.40,
+    "price_stop": 0.10,          # 跌破止损价：市价平掉（taker 费），不等 Q4 出场
     "size": 30.0,
     "pregame_window_s": 60,
     "entry_cutoff_q4_clock_s": 300,   # 赛中开仓截止：Q4 比赛时钟剩 5:00
@@ -61,6 +62,9 @@ class ScalpDipStrategy(Strategy):
       撤另一侧挂单，该侧挂 0.40 卖单。
     - 价格触及 0.40：卖单成交，落袋 +$3.00（maker，手续费 0；成交按策略自己的
       价 0.30/0.40 记，保守口径）。
+    - 跌破止损价 0.10：市价平掉（taker 费），不等 Q4 出场。回测 52 场：0.10 止损
+      不杀死任何赢腿（赢腿触及 0.40 前从未跌到 0.10），救下 10 条输腿
+      （否则亏整腿约 -9.00）；0.20 止损会杀死 3 条赢腿，反而更差。
     - Q4 比赛时钟剩 2:00 仍未到 0.40：撤卖单，市价平掉，不持有到终场
       （体育 taker 费 = fee_rate x 份数 x 价 x (1-价)，一般 0.05）。
     - 双边同时成交（两边卖价同时 <= 0.30）：锁利，付 2x0.30x30=18，结算收 30，+12.00。
@@ -243,6 +247,16 @@ class ScalpDipStrategy(Strategy):
                 pnl = ctx["ledger"].close_leg(leg_id, p["target"], 0.0, ts=now)
                 self._log(ctx, f"{q} 触及 0.40 落袋：{'A' if side == 'a' else 'B'}队 "
                                f"0.30 买入 0.40 卖出，盈亏 {pnl:+.2f}")
+                st["phase"] = "DONE"
+                return []
+            # 跌破止损价：市价平掉（taker 费），不等 Q4 出场
+            if bid is not None and p.get("price_stop") is not None \
+                    and bid <= p["price_stop"]:
+                fee_rate = state.get("fee_rate") or 0.05
+                fee = fee_rate * p["size"] * bid * (1 - bid)
+                pnl = ctx["ledger"].close_leg(leg_id, bid, fee, ts=now)
+                self._log(ctx, f"{q} 跌破止损 {p['price_stop']:.2f}，市价 "
+                               f"{bid:.2f} 平掉（taker 费 {fee:.2f}），盈亏 {pnl:+.2f}")
                 st["phase"] = "DONE"
                 return []
             # Q4（及加时）比赛时钟剩 2:00：市价平掉

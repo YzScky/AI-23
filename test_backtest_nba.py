@@ -61,7 +61,18 @@ def _price_a_take_profit(off):
 
 
 def _price_a_q4_exit(off):
-    # 赛前 0.35 -> Q2 跌到 0.30 成交 -> 一路跌到 0.10，Q4 剩 2:00 市价出
+    # 赛前 0.35 -> Q2 跌到 0.30 成交 -> 跌到 0.25 横住（高于止损 0.10），Q4 剩 2:00 市价出
+    if off < 0:
+        return 0.35
+    if off < 2400:
+        return 0.34
+    if off == 2400:
+        return 0.30
+    return 0.25
+
+
+def _price_a_stop_exit(off):
+    # 赛前 0.35 -> Q2 跌到 0.30 成交 -> 一路跌到 0.10，触发止损（不等 Q4 出场）
     if off < 0:
         return 0.35
     if off < 2400:
@@ -100,11 +111,23 @@ def test_q4_exit():
               _price_a_q4_exit, "m-q4")
     st, ledger, _logs = _run(g)
     assert st["q4_exits"] == 1, st
-    assert st["q4_exit_prices"] == [0.10], st
+    assert st["q4_exit_prices"] == [0.25], st
+    # 0.25*30 - taker费 0.05*30*0.25*0.75=0.2812 - 成本 9.00 = -1.7812
+    assert abs(st["pnl"] - (-1.7812)) < 1e-9, st
+    assert abs(ledger.snapshot()["cash"] - 998.22) < 0.01, ledger.snapshot()
+    print("PASS test_q4_exit")
+
+
+def test_stop_exit():
+    g = _game("Warriors vs. Grizzlies", "GSW", "MEM", "MEM",
+              _price_a_stop_exit, "m-stop")
+    st, ledger, _logs = _run(g)
+    assert st["stop_exits"] == 1, st
+    assert st["stop_exit_prices"] == [0.10], st
     # 0.10*30 - taker费 0.05*30*0.10*0.90=0.135 - 成本 9.00 = -6.135
     assert abs(st["pnl"] - (-6.135)) < 1e-9, st
     assert abs(ledger.snapshot()["cash"] - 993.865) < 0.01, ledger.snapshot()
-    print("PASS test_q4_exit")
+    print("PASS test_stop_exit")
 
 
 def test_replay_clock():
@@ -128,5 +151,6 @@ def test_replay_clock():
 if __name__ == "__main__":
     test_take_profit()
     test_q4_exit()
+    test_stop_exit()
     test_replay_clock()
-    print("3/3 通过")
+    print("4/4 通过")
