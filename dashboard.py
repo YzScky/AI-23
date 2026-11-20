@@ -27,7 +27,8 @@ from urllib.parse import urlparse
 ROOT = os.path.dirname(os.path.abspath(__file__))
 LOG_PATH = os.path.join(ROOT, "platform.log")
 PID_PATH = os.path.join(ROOT, "platform.pid")
-HTML_PATH = os.path.join(ROOT, "dashboard.html")
+HTML_PATH = os.path.join(ROOT, "console.html")          # 聚合控制台 UI（新版首页）
+LEGACY_HTML_PATH = os.path.join(ROOT, "dashboard.html")  # 旧看板（保留在 /legacy.html）
 BACKTEST_PY = os.path.join(ROOT, "backtest.py")
 RUN_PY = os.path.join(ROOT, "run.py")
 HOST = "127.0.0.1"
@@ -350,6 +351,26 @@ def run_backtest(params):
     return {"ok": False, "error": "回测未返回结果：" + " / ".join(tail)}
 
 
+# ---------- 配置（只读，无任何凭证字段） ----------
+
+def safe_config():
+    """GET /api/config：把 config.py 的风控/板块参数暴露给控制台 UI。
+    只返回非敏感字段；config.py 读不到时返回 error，绝不抛异常。"""
+    try:
+        sys.path.insert(0, ROOT)
+        from config import CONFIG
+        return {
+            "mode": CONFIG.get("mode"),
+            "live_trading": CONFIG.get("live_trading"),
+            "strategy_name": (CONFIG.get("strategy") or {}).get("name"),
+            "risk": CONFIG.get("risk") or {},
+            "binance": CONFIG.get("binance") or {},
+            "history_enabled": CONFIG.get("history"),
+        }
+    except Exception as e:
+        return {"error": f"config.py 读取失败：{str(e)[:150]}"}
+
+
 # ---------- 钱包 ----------
 
 def wallet_status():
@@ -530,12 +551,14 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _send_html(self):
+    def _send_html(self, path=None):
+        p = path or HTML_PATH
+        name = os.path.basename(p)
         try:
-            with open(HTML_PATH, "rb") as f:
+            with open(p, "rb") as f:
                 body = f.read()
         except Exception as e:
-            self._send_json(500, {"ok": False, "error": f"dashboard.html 读不到：{e}"})
+            self._send_json(500, {"ok": False, "error": f"{name} 读不到：{e}"})
             return
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -548,6 +571,10 @@ class Handler(BaseHTTPRequestHandler):
             p = urlparse(self.path).path
             if p in ("/", "/index.html"):
                 self._send_html()
+            elif p == "/legacy.html":
+                self._send_html(LEGACY_HTML_PATH)
+            elif p == "/api/config":
+                self._send_json(200, {"ok": True, "config": safe_config()})
             elif p == "/api/status":
                 counts, markets = query_db()
                 pid = platform_running()

@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>聚合交易控制台 · 骨架 v2 双板块独立工作区</title>
+<style>
+:root{
+  --bg:#ffffff; --bg2:#f5f6f8; --bg3:#eef0f3;
+  --tx:#1a1d21; --tx2:#5c6470; --tx3:#8a919c;
+  --bd:rgba(0,0,0,.12); --bd2:rgba(0,0,0,.22);
+  --up:#0f6e56; --upbg:#e1f5ee;
+  --dn:#a32d2d; --dnbg:#fcebeb;
+  --wn:#854f0b; --wnbg:#faeeda;
+  --info:#185fa5; --infobg:#e6f1fb;
+  --mono:'SF Mono',Consolas,'Cascadia Code',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg3);color:var(--tx);font-size:13px}
+button{font:inherit;cursor:pointer;border:0.5px solid var(--bd2);background:transparent;border-radius:8px;padding:6px 12px}
+input,select{font:inherit;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd);border-radius:8px;background:var(--bg);outline:none}
+input:focus{border-color:var(--info)}
+table{border-collapse:collapse;width:100%;table-layout:fixed}
+th{font-weight:400;color:var(--tx3);text-align:left;padding:6px 8px;font-size:12px}
+td{padding:7px 8px;border-top:0.5px solid var(--bd);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.num{font-family:var(--mono);text-align:right}
+.up{color:var(--up)}.dn{color:var(--dn)}.wn{color:var(--wn)}
+header{display:flex;align-items:center;gap:12px;background:var(--bg2);border-bottom:0.5px solid var(--bd);padding:0 16px;height:44px}
+header .logo{font-weight:500;font-size:14px}
+.badge-paper{background:var(--wnbg);color:var(--wn);font-size:12px;padding:2px 10px;border-radius:999px;font-weight:500}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.ok{background:#3b6d11}.bad{background:#e24b4a}
+header .right{margin-left:auto;display:flex;gap:16px;color:var(--tx2);font-size:12px}
+nav.top{display:flex;gap:2px;background:var(--bg2);border-bottom:0.5px solid var(--bd);padding:0 12px;align-items:stretch}
+nav.top button{border:none;border-radius:0;padding:11px 18px;color:var(--tx2);font-size:13px;border-bottom:2px solid transparent;display:flex;align-items:center;gap:8px}
+nav.top button:hover{color:var(--tx)}
+nav.top button.active{color:var(--tx);border-bottom-color:var(--tx);font-weight:500}
+.mod-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.mod-dot.poly{background:#993556}.mod-dot.fut{background:#185fa5}.mod-dot.top{background:#7c5cbf}.mod-dot.g{background:#639922}
+nav.sub{display:flex;gap:2px;background:var(--bg);border-bottom:0.5px solid var(--bd);padding:0 12px}
+nav.sub button{border:none;border-radius:0;padding:9px 14px;color:var(--tx3);font-size:12px;border-bottom:2px solid transparent}
+nav.sub button.active{color:var(--info);border-bottom-color:var(--info)}
+main{max-width:1280px;margin:0 auto;padding:16px}
+.page{display:none}.page.active{display:block}
+.mod{display:none}.mod.active{display:block}
+.card{background:var(--bg);border:0.5px solid var(--bd);border-radius:12px;padding:14px}
+.card h3{font-size:13px;font-weight:500;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.card h3 .sub{font-size:12px;color:var(--tx3);font-weight:400}
+.grid{display:grid;gap:12px}
+.metric{background:var(--bg2);border-radius:10px;padding:12px}
+.metric .label{color:var(--tx2);font-size:12px}
+.metric .val{font-size:22px;font-weight:500;margin-top:2px}
+.metric .hint{font-size:11px;color:var(--tx3);margin-top:2px}
+.bar{height:5px;background:var(--bg3);border-radius:3px;margin-top:8px}
+.bar>i{display:block;height:5px;border-radius:3px}
+.term-grid{display:grid;grid-template-columns:170px minmax(0,1fr) 230px;gap:12px}
+.term-bottom{margin-top:12px}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px}
+button.tag{border:none;cursor:pointer;font-family:inherit}
+.tag-blue{background:var(--infobg);color:var(--info)}
+.tag-green{background:var(--upbg);color:var(--up)}
+.tag-red{background:var(--dnbg);color:var(--dn)}
+.tag-amber{background:var(--wnbg);color:var(--wn)}
+.tag-gray{background:var(--bg3);color:var(--tx2)}
+.tag-pink{background:#fbeaf0;color:#993556}
+.side-tabs{display:flex;gap:8px;margin-bottom:10px}
+.fee-row{color:var(--tx2);border-top:0.5px solid var(--bd);padding-top:8px;margin-top:10px;font-size:12px;line-height:1.7}
+.btn-long{width:100%;background:var(--dnbg);color:var(--dn);border:0.5px solid #f09595;font-weight:500;margin-top:8px}
+.btn-short{width:100%;background:var(--upbg);color:var(--up);border:0.5px solid #5dcaa5;font-weight:500;margin-top:8px}
+.logline{font-family:var(--mono);font-size:12px;color:var(--tx2);padding:4px 0;border-bottom:0.5px solid var(--bd)}
+.logline .t{color:var(--tx3);margin-right:8px}
+.check{display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--bd);font-size:12px}
+.check:last-child{border-bottom:none}
+.chart-box{position:relative;background:var(--bg2);border-radius:8px;height:300px}
+.chart-box .axis{position:absolute;bottom:6px;left:10px;font-size:11px;color:var(--tx3)}
+footer{color:var(--tx3);font-size:11px;text-align:center;padding:16px}
+.sig{margin-bottom:10px}
+.sig-h{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.sig .bar{margin-top:0}
+.split-bar{height:5px;border-radius:3px;overflow:hidden;display:flex}
+.split-bar>i{display:block;height:5px}
+button.mini{padding:4px 12px;font-size:12px}
+#top-board tr[data-sym]{cursor:pointer}
+#top-board tr[data-sym]:hover td{background:var(--bg2)}
+#top-board tr.sel td{background:var(--infobg)}
+.gridline{stroke:rgba(0,0,0,.12)}
+[data-theme="dark"] .gridline{stroke:rgba(255,255,255,.18)}
+[data-theme="dark"]{
+  --bg:#16181d; --bg2:#1e2329; --bg3:#0e1013;
+  --tx:#eaecef; --tx2:#b7bdc6; --tx3:#848e9c;
+  --bd:rgba(255,255,255,.1); --bd2:rgba(255,255,255,.2);
+  --up:#2ebd85; --upbg:rgba(46,189,133,.14);
+  --dn:#f6465d; --dnbg:rgba(246,70,93,.14);
+  --wn:#f0b90b; --wnbg:rgba(240,185,11,.14);
+  --info:#5b9cf6; --infobg:rgba(91,156,246,.16);
+}
+[data-theme="dark"] .tag-pink{background:rgba(153,53,86,.25);color:#e07ba0}
+[data-theme="dark"] .btn-long{border-color:rgba(246,70,93,.5)}
+[data-theme="dark"] .btn-short{border-color:rgba(46,189,133,.5)}
+[data-theme="dark"] .ok{background:#2ebd85}
+@media (max-width:900px){.term-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">聚合交易控制台</span>
+  <span class="badge-paper">模拟盘 PAPER</span>
+  <span class="right">
+    <span><i class="status-dot ok"></i>Polymarket WS</span>
+    <span><i class="status-dot ok"></i>币安 WS</span>
+    <span><i class="status-dot bad"></i>REST <span class="num">38/1200</span></span>
+    <span>总权益 <span class="num">$13,514.98</span></span>
+    <button class="mini wallet-toggle" style="background:var(--infobg);color:var(--info);border-color:transparent;font-weight:500">连接钱包</button>
+    <button class="mini" id="themeBtn">暗色</button>
+  </span>
+</header>
+
+<nav class="top">
+  <button class="active" data-m="poly"><i class="mod-dot poly"></i>预测板块 · Polymarket</button>
+  <button data-m="fut"><i class="mod-dot fut"></i>合约 · BTC 主力</button>
+  <button data-m="top"><i class="mod-dot top"></i>合约 · Top30 轮动</button>
+  <button data-m="g"><i class="mod-dot g"></i>全局 · 风控 / 连接 / 日志</button>
+</nav>
+
+<nav class="sub" id="subnav"></nav>
+
+<main>
+
+<!-- ==================== 预测板块 ==================== -->
+<div class="mod active" id="m-poly">
+
+  <section class="page active" id="p-poly-term">
+    <div class="card" style="margin-bottom:12px">
+      <h3>资产总览 <span class="sub">USDC 保证金账户 ｜ 期初 $3,210.00 · 入金 $0 · 出金 $0</span></h3>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(200px,280px);gap:12px;align-items:center">
+        <div class="metric"><div class="label">总权益</div><div class="val num" style="font-size:18px">$3,224.85</div><div class="hint">可用 $3,210.45 + 占用 $14.40</div></div>
+        <div class="metric"><div class="label">今日盈亏</div><div class="val num up" style="font-size:18px">+3.20</div><div class="hint">已实现 +4.05 ｜ 浮动 -0.85</div></div>
+        <div class="metric"><div class="label">累计盈亏（30天）</div><div class="val num up" style="font-size:18px">+14.85</div><div class="hint">扣费后 ｜ 盈利日 6/7</div></div>
+        <div class="metric"><div class="label">收益率（30天）</div><div class="val num up" style="font-size:18px">+0.46%</div><div class="hint">熔断线 -$150 未触发</div></div>
+        <div>
+          <div style="display:flex;gap:6px;margin-bottom:4px;font-size:11px"><button class="tag tag-gray" data-eq="eq-poly" data-p="0,46 23,47 46,45 69,48 92,46 115,49 138,44 161,47 184,43 207,45 230,41 253,43 280,40">1日</button><button class="tag tag-blue" data-eq="eq-poly" data-p="0,52 35,50 70,51 105,47 140,48 175,44 210,45 245,41 280,38">7日</button><button class="tag tag-gray" data-eq="eq-poly" data-p="0,56 25,54 50,55 75,52 100,53 125,50 150,51 175,48 200,49 225,45 250,46 280,40">30日</button><button class="tag tag-gray" data-eq="eq-poly" data-p="0,58 30,56 60,57 90,54 120,55 150,51 180,52 210,48 240,49 270,43 280,38">全部</button></div>
+          <svg viewBox="0 0 280 64" style="width:100%">
+            <line x1="0" y1="56" x2="280" y2="56" class="gridline" stroke-width="0.5"/>
+            <polyline id="eq-poly" points="0,52 35,50 70,51 105,47 140,48 175,44 210,45 245,41 280,38" fill="none" stroke="#993556" stroke-width="1.5"/>
+          </svg>
+          <div style="font-size:10px;color:var(--tx3)">权益曲线 · 含未实现盈亏</div>
+        </div>
+      </div>
+    </div>
+    <div class="term-grid">
+      <div class="card">
+        <h3>窗口监视 <span class="sub" id="poly-watch-sub">WS 实时</span></h3>
+        <table id="poly-watch">
+          <tr><th>市场</th><th style="width:26%">买两边</th><th style="width:26%">卖两边</th><th style="width:20%">状态</th></tr>
+          <tr><td>BTC 5m 20:20</td><td class="num wn">1.00</td></tr>
+          <tr><td class="up">ETH 5m 20:20</td><td class="num up">0.97</td></tr>
+          <tr><td class="up">BTC 1m 20:21</td><td class="num up">0.98</td></tr>
+          <tr><td class="up">SOL 5m 20:20</td><td class="num up">0.99</td></tr>
+        </table>
+        <h3 style="margin-top:14px">信号面板 <span class="sub">实时 · 带数值</span></h3>
+        <div class="sig"><div class="sig-h"><span>市场热度</span><span class="num up">82 · 高</span></div><div class="bar"><i style="width:82%;background:var(--up)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>流动性</span><span class="num up">74 · 充足</span></div><div class="bar"><i style="width:74%;background:var(--up)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>价差机会</span><span class="num">3 窗 · 62</span></div><div class="bar"><i style="width:62%;background:var(--info)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>订单簿失衡</span><span class="num up">买 63% / 卖 37%</span></div><div class="split-bar"><i style="width:63%;background:var(--up)"></i><i style="width:37%;background:var(--dn)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>临近结算风险</span><span class="num wn">41 · 观察</span></div><div class="bar"><i style="width:41%;background:var(--wn)"></i></div></div>
+      </div>
+      <div class="card">
+        <h3>BTC 5m 窗口 · Up/Down 隐含概率 <span class="sub">窗口 20:20</span></h3>
+        <div class="chart-box">
+          <svg viewBox="0 0 600 260" style="width:100%;height:100%" preserveAspectRatio="none">
+            <polyline points="0,180 50,172 100,178 150,150 200,158 250,130 300,140 350,112 400,122 450,96 500,106 550,84 600,78" fill="none" stroke="#993556" stroke-width="1.5"/>
+            <polyline points="0,80 50,88 100,82 150,110 200,102 250,130 300,120 350,148 400,138 450,164 500,154 550,176 600,182" fill="none" stroke="#185fa5" stroke-width="1.5"/>
+            <line x1="0" y1="130" x2="600" y2="130" class="gridline" stroke-width="0.5" stroke-dasharray="4 3"/>
+            <text x="8" y="125" font-size="11" fill="var(--tx3)">0.50 平价线</text>
+          </svg>
+          <div class="axis"><span style="color:#993556">— Up 隐含概率</span> ｜ <span style="color:#185fa5">— Down 隐含概率</span></div>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:12px">
+          <div class="metric"><div class="label">Up 卖价</div><div class="val" style="font-size:16px;font-family:var(--mono)">0.62</div></div>
+          <div class="metric"><div class="label">Down 卖价</div><div class="val" style="font-size:16px;font-family:var(--mono)">0.36</div></div>
+          <div class="metric"><div class="label">两腿和</div><div class="val wn" style="font-size:16px;font-family:var(--mono)">0.98</div></div>
+          <div class="metric"><div class="label">结算倒计时</div><div class="val" style="font-size:16px;font-family:var(--mono)">1:12</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>AI 自动执行 <span class="sub tag tag-green" style="font-weight:500">运行中 · 模拟</span></h3>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:12px;color:var(--tx2);white-space:nowrap">当前策略</span>
+          <select style="flex:1"><option>v8 · 5信号共振（运行中）</option><option>v7 · 收敛过滤（待命）</option><option>v6 · 单信号触发（已停用）</option></select>
+        </div>
+        <div class="check"><span>策略规则</span><span class="num">两腿和 ≤0.95 吃双边</span></div>
+        <div class="check"><span>决策模型</span><span class="num">deepseek-reasoner · 240ms</span></div>
+        <div class="check"><span>决策频率</span><span class="num">每窗口滚动评估</span></div>
+        <div class="check"><span>今日 AI 交易</span><span class="num">9 窗 ｜ 拒单 5 窗</span></div>
+        <div class="check"><span>双边率（今日）</span><span class="num">68%</span></div>
+        <h3 style="margin-top:12px">执行参数 <span class="sub">来自策略模块 · 只读</span></h3>
+        <div class="check"><span>单窗投入上限</span><span class="num">$50</span></div>
+        <div class="check"><span>补腿等待</span><span class="num">5 分钟超时出场</span></div>
+        <div class="check"><span>单边止损</span><span class="num">时间止损 · 绝不拖结算</span></div>
+        <div class="check"><span>日亏损熔断</span><span class="num">$86 / $150 已用</span></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button style="flex:1;background:var(--wnbg);color:var(--wn);border-color:#e5b96b;font-weight:500">暂停 AI（模拟）</button>
+          <button style="flex:1">恢复</button>
+        </div>
+        <div style="color:var(--tx3);font-size:11px;margin-top:10px">每个窗口的吃双边/补腿/跳过决策记录在「窗口队列」页，逐笔依据在「复盘 → 历史逐笔记录」。</div>
+
+        <details style="margin-top:12px">
+          <summary style="cursor:pointer;color:var(--tx2);font-size:12px;font-weight:500">人工干预下单（折叠 · 平时不用）</summary>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+            <select><option>BTC 5m 20:20</option><option>ETH 5m 20:20</option></select>
+            <select><option>买 Up @0.62</option><option>买 Down @0.36</option></select>
+            <input placeholder="份数" value="">
+            <button class="btn-long">买 Up（模拟）</button>
+            <button class="btn-short" style="margin-top:0">买 Down（模拟）</button>
+          </div>
+        </details>
+        <div class="fee-row">USDC 余额 $3,210.45<br>Polymarket taker 费率按盘口计<br>人工单需二次确认才发送</div>
+      </div>
+    </div>
+    <div class="card term-bottom">
+      <h3>预测持仓 <span class="sub">9 窗 ｜ 双边 6 / 单边 3</span></h3>
+      <table>
+        <tr><th style="width:18%">窗口</th><th style="width:10%">腿</th><th style="width:10%">份数</th><th style="width:11%">成本</th><th style="width:11%">现价</th><th style="width:11%">盈亏</th><th style="width:14%">状态</th><th>操作</th></tr>
+        <tr><td>BTC 5m 20:05</td><td><span class="tag tag-green">双边</span></td><td class="num">20</td><td class="num">0.58</td><td class="num">0.61</td><td class="num up">+0.60</td><td><span class="tag tag-amber">锁定至结算</span></td><td><span style="color:var(--tx3)">无需操作</span></td></tr>
+        <tr><td>ETH 1m 20:07</td><td><span class="tag tag-red">单边Up</span></td><td class="num">30</td><td class="num">0.28</td><td class="num">0.22</td><td class="num dn">-1.80</td><td class="num">结算 0:48</td><td><button style="padding:2px 10px;font-size:11px">止损（模拟）</button></td></tr>
+        <tr><td>BTC 1m 20:11</td><td><span class="tag tag-red">单边Down</span></td><td class="num">10</td><td class="num">0.30</td><td class="num">0.25</td><td class="num dn">-0.50</td><td class="num">结算 1:55</td><td><button style="padding:2px 10px;font-size:11px">止损（模拟）</button></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="page" id="p-poly-queue">
+    <div class="card" style="margin-bottom:12px">
+      <h3>窗口队列 <span class="sub">每行 = 一次决策依据，全板块唯一入口</span></h3>
+      <table>
+        <tr><th style="width:16%">市场窗口</th><th style="width:11%">Up 卖价</th><th style="width:11%">Down 卖价</th><th style="width:10%">两腿和</th><th style="width:12%">系统动作</th><th style="width:12%">状态</th><th style="width:12%">已成交</th><th>结算倒计时</th></tr>
+        <tr><td>BTC 5m 20:20</td><td class="num">0.62</td><td class="num">0.36</td><td class="num wn">1.00</td><td><span class="tag tag-amber">跳过</span></td><td>—</td><td class="num">—</td><td class="num">1:12</td></tr>
+        <tr><td>ETH 5m 20:20</td><td class="num">0.58</td><td class="num">0.39</td><td class="num up">0.97</td><td><span class="tag tag-blue">吃双边</span></td><td>挂单中</td><td class="num">—</td><td class="num">1:12</td></tr>
+        <tr><td>BTC 1m 20:21</td><td class="num">0.55</td><td class="num">0.43</td><td class="num up">0.98</td><td><span class="tag tag-blue">吃双边</span></td><td>Up已成交</td><td class="num">0.55</td><td class="num">2:03</td></tr>
+        <tr><td>SOL 5m 20:20</td><td class="num">0.66</td><td class="num">0.33</td><td class="num up">0.99</td><td><span class="tag tag-blue">补对腿</span></td><td>等待对面</td><td class="num">0.33</td><td class="num">1:12</td></tr>
+      </table>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">规则占位：两腿和 ≤ 0.95 同时吃；单边腿 5 分钟内对面未回补 → 现价出场，绝不拖到结算。</div>
+    </div>
+    <div class="card">
+      <h3>结算记录（今日）</h3>
+      <table>
+        <tr><th style="width:30%">窗口</th><th style="width:20%">类型</th><th style="width:20%">盈亏</th><th>方式</th></tr>
+        <tr><td>BTC 5m 19:55</td><td>双边</td><td class="num up">+0.42</td><td>结算兑 $1</td></tr>
+        <tr><td>ETH 5m 19:50</td><td>双边</td><td class="num up">+0.38</td><td>结算兑 $1</td></tr>
+        <tr><td>SOL 1m 19:52</td><td>单边Up</td><td class="num dn">-0.30</td><td>结算归零</td></tr>
+        <tr><td>BTC 1m 19:48</td><td>单边Down</td><td class="num dn">-1.00</td><td>止损后翻盘</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="page" id="p-poly-bt">
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
+      <div class="metric"><div class="label">预测总收益（30天）</div><div class="val up">+5.2%</div><div class="hint">扣费后</div></div>
+      <div class="metric"><div class="label">双边率</div><div class="val">68%</div><div class="hint">目标 ≥80%</div></div>
+      <div class="metric"><div class="label">结算胜率（单边）</div><div class="val">71%</div><div class="hint">双边不计</div></div>
+      <div class="metric"><div class="label">手续费占毛利</div><div class="val dn">31%</div><div class="hint">xuanxuan008 教训指标</div></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>预测净值曲线 <span class="sub">含手续费 ｜ 30 天</span></h3>
+      <svg viewBox="0 0 900 160" style="width:100%">
+        <line x1="0" y1="140" x2="900" y2="140" stroke="rgba(0,0,0,.12)" stroke-width="0.5"/>
+        <polyline points="0,130 80,126 160,120 240,124 320,110 400,104 480,108 560,92 640,86 720,74 800,62 900,48" fill="none" stroke="#993556" stroke-width="1.5"/>
+        <text x="6" y="18" font-size="12" fill="#0f6e56">+$5.2%（扣费后）</text>
+      </svg>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <h3>历史数据管理 <span class="sub">回测的数据地基</span></h3>
+      <table>
+        <tr><th style="width:22%">数据集</th><th style="width:14%">范围</th><th style="width:14%">条数</th><th style="width:16%">存储</th><th style="width:16%">最近更新</th><th>操作</th></tr>
+        <tr><td>Polymarket 盘口快照</td><td class="num">11-01 ~ 今</td><td class="num">412,380</td><td><span class="tag tag-gray">Parquet 本地</span></td><td class="num">20:14:02</td><td><button style="padding:2px 10px;font-size:11px">导出 CSV</button> <button style="padding:2px 10px;font-size:11px">回放</button></td></tr>
+        <tr><td>窗口结算结果</td><td class="num">11-01 ~ 今</td><td class="num">8,640</td><td><span class="tag tag-gray">SQLite</span></td><td class="num">20:15:00</td><td><button style="padding:2px 10px;font-size:11px">导出 CSV</button></td></tr>
+        <tr><td>成交与费用流水</td><td class="num">11-01 ~ 今</td><td class="num">3,120</td><td><span class="tag tag-gray">SQLite</span></td><td class="num">20:12:47</td><td><button style="padding:2px 10px;font-size:11px">导出 CSV</button></td></tr>
+        <tr><td>盘口缺失段</td><td class="num">11-09 03:12~03:40</td><td class="num">28 窗</td><td><span class="tag tag-red">缺失</span></td><td class="num">—</td><td><button style="padding:2px 10px;font-size:11px">补抓（模拟）</button></td></tr>
+      </table>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">回测前自动校验：任一数据集缺失/过期会阻止回测并提示补抓；快照按窗口粒度可整段回放重跑策略。</div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin-bottom:12px">
+      <div class="card">
+        <h3>按日汇总 <span class="sub">近 7 天 ｜ 扣费后</span></h3>
+        <table>
+          <tr><th style="width:18%">日期</th><th style="width:14%">窗数</th><th style="width:14%">双边率</th><th style="width:16%">盈亏</th><th style="width:18%">手续费</th><th>最大单亏</th></tr>
+          <tr><td class="num">11-20</td><td class="num">72</td><td class="num">68%</td><td class="num up">+3.20</td><td class="num">1.41</td><td class="num dn">-1.00</td></tr>
+          <tr><td class="num">11-19</td><td class="num">72</td><td class="num">64%</td><td class="num up">+1.85</td><td class="num">1.62</td><td class="num dn">-1.30</td></tr>
+          <tr><td class="num">11-18</td><td class="num">72</td><td class="num">71%</td><td class="num up">+4.10</td><td class="num">1.28</td><td class="num dn">-0.60</td></tr>
+          <tr><td class="num">11-17</td><td class="num">72</td><td class="num">58%</td><td class="num dn">-0.75</td><td class="num">1.80</td><td class="num dn">-1.90</td></tr>
+          <tr><td class="num">11-16</td><td class="num">72</td><td class="num">66%</td><td class="num up">+2.40</td><td class="num">1.55</td><td class="num dn">-1.10</td></tr>
+          <tr><td class="num">11-15</td><td class="num">72</td><td class="num">69%</td><td class="num up">+2.95</td><td class="num">1.44</td><td class="num dn">-0.85</td></tr>
+          <tr><td class="num">11-14</td><td class="num">72</td><td class="num">62%</td><td class="num up">+1.10</td><td class="num">1.71</td><td class="num dn">-1.45</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>历史胜率分布 <span class="sub">按买入价位 ｜ 30 天</span></h3>
+        <table>
+          <tr><th style="width:20%">买入价档</th><th style="width:16%">笔数</th><th style="width:16%">胜率</th><th style="width:20%">单笔均盈亏</th><th>合计</th></tr>
+          <tr><td class="num">双边 ≤0.58</td><td class="num">812</td><td class="num">100%</td><td class="num up">+0.42</td><td class="num up">+341.0</td></tr>
+          <tr><td class="num">双边 0.59~0.65</td><td class="num">304</td><td class="num">100%</td><td class="num up">+0.35</td><td class="num up">+106.4</td></tr>
+          <tr><td class="num">单边 ≤0.20</td><td class="num">88</td><td class="num">24%</td><td class="num dn">-0.11</td><td class="num dn">-9.7</td></tr>
+          <tr><td class="num">单边 0.21~0.30</td><td class="num">44</td><td class="num">18%</td><td class="num dn">-0.16</td><td class="num dn">-7.0</td></tr>
+          <tr><td class="num">补腿出场</td><td class="num">31</td><td class="num">—</td><td class="num dn">-0.05</td><td class="num dn">-1.6</td></tr>
+        </table>
+        <div style="color:var(--tx3);font-size:11px;margin-top:8px">此表是策略调参的核心证据：哪一档价位的真实期望为正一目了然。</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>历史逐笔记录 <span class="sub">11-17 ~ 今 ｜ 可按结果筛选</span></h3>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <select><option>近 3 天</option><option>近 7 天</option><option>近 30 天</option></select>
+        <button class="tag tag-blue" style="border:none">全部</button>
+        <button class="tag tag-green" style="border:none">双边结算</button>
+        <button class="tag tag-red" style="border:none">单边亏损</button>
+        <button class="tag tag-gray" style="border:none">SKIP 拒单</button>
+      </div>
+      <div style="max-height:260px;overflow:auto">
+      <table>
+        <tr><th style="width:14%">时间</th><th style="width:14%">窗口</th><th style="width:8%">腿</th><th style="width:10%">份数</th><th style="width:10%">买入</th><th style="width:10%">出场</th><th style="width:10%">盈亏</th><th style="width:12%">手续费</th><th>决策依据</th></tr>
+        <tr><td class="num">11-20 20:05</td><td>BTC 5m 20:05</td><td><span class="tag tag-green">双边</span></td><td class="num">20</td><td class="num">0.58</td><td class="num">结算 1.00</td><td class="num up">+8.40</td><td class="num">0.35</td><td style="color:var(--tx3)">两腿和 0.93 ≤ 0.95</td></tr>
+        <tr><td class="num">11-20 19:52</td><td>SOL 1m 19:52</td><td><span class="tag tag-red">单边Up</span></td><td class="num">30</td><td class="num">0.28</td><td class="num">结算归零</td><td class="num dn">-8.40</td><td class="num">0.26</td><td style="color:var(--tx3)">对面腿 5min 未回补→持有</td></tr>
+        <tr><td class="num">11-20 19:48</td><td>BTC 1m 19:48</td><td><span class="tag tag-red">单边Down</span></td><td class="num">10</td><td class="num">0.30</td><td class="num">止损 0.20</td><td class="num dn">-1.00</td><td class="num">0.09</td><td style="color:var(--tx3)">时间止损：25min 未回本</td></tr>
+        <tr><td class="num">11-20 19:31</td><td>ETH 5m 19:30</td><td><span class="tag tag-green">双边</span></td><td class="num">25</td><td class="num">0.62</td><td class="num">结算 1.00</td><td class="num up">+9.50</td><td class="num">0.44</td><td style="color:var(--tx3)">两腿和 0.94 ≤ 0.95</td></tr>
+        <tr><td class="num">11-20 19:13</td><td>BTC 5m 19:10</td><td><span class="tag tag-gray">SKIP</span></td><td class="num">—</td><td class="num">0.66+0.36</td><td>—</td><td class="num">—</td><td class="num">—</td><td style="color:var(--tx3)">两腿和 1.02 &gt; 0.95 拒单</td></tr>
+        <tr><td class="num">11-19 21:40</td><td>ETH 1m 21:40</td><td><span class="tag tag-green">双边</span></td><td class="num">15</td><td class="num">0.55</td><td class="num">结算 1.00</td><td class="num up">+6.75</td><td class="num">0.26</td><td style="color:var(--tx3)">两腿和 0.92 ≤ 0.95</td></tr>
+        <tr><td class="num">11-19 20:55</td><td>BTC 5m 20:50</td><td><span class="tag tag-red">单边Up</span></td><td class="num">20</td><td class="num">0.25</td><td class="num">补腿失败出场 0.22</td><td class="num dn">-0.60</td><td class="num">0.14</td><td style="color:var(--tx3)">对面未回补→现价出场</td></tr>
+        <tr><td class="num">11-19 19:22</td><td>SOL 5m 19:20</td><td><span class="tag tag-green">双边</span></td><td class="num">30</td><td class="num">0.60</td><td class="num">结算 1.00</td><td class="num up">+12.00</td><td class="num">0.53</td><td style="color:var(--tx3)">两腿和 0.95 ≤ 0.95</td></tr>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="p-poly-strat">
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
+      <div class="card" style="border-color:#993556">
+        <h3>v8 · 5信号共振 <span class="tag tag-green">运行中</span></h3>
+        <div class="check"><span>规则</span><span class="num">两腿和 ≤0.95 吃双边</span></div>
+        <div class="check"><span>补腿 / 止损</span><span class="num">5min 超时 · 时间止损</span></div>
+        <div class="check"><span>近30天（扣费）</span><span class="num up">+5.2% ｜ 双边率 68%</span></div>
+        <div class="check"><span>手续费占毛利</span><span class="num dn">31%</span></div>
+        <button style="width:100%;margin-top:10px;background:var(--bg2)">查看回测详情</button>
+      </div>
+      <div class="card">
+        <h3>v7 · 收敛过滤 <span class="tag tag-gray">待命</span></h3>
+        <div class="check"><span>规则</span><span class="num">3信号收敛 + 价位白名单</span></div>
+        <div class="check"><span>补腿 / 止损</span><span class="num">3min 超时 · 0.20 止损</span></div>
+        <div class="check"><span>近30天（扣费）</span><span class="num up">+2.1% ｜ 双边率 54%</span></div>
+        <div class="check"><span>手续费占毛利</span><span class="num dn">38%</span></div>
+        <button style="width:100%;margin-top:10px">切换到此策略（模拟）</button>
+      </div>
+      <div class="card" style="opacity:.6">
+        <h3>v6 · 单信号触发 <span class="tag tag-red">已停用</span></h3>
+        <div class="check"><span>规则</span><span class="num">任一信号亮即开仓</span></div>
+        <div class="check"><span>停用原因</span><span class="num dn">单边率过高 · 净亏</span></div>
+        <div class="check"><span>近30天（扣费）</span><span class="num dn">-11.4% ｜ 双边率 22%</span></div>
+        <div class="check"><span>手续费占毛利</span><span class="num dn">61%</span></div>
+        <button style="width:100%;margin-top:10px" disabled>已停用 · 数据留档</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>策略对比 <span class="sub">同一数据集回放 ｜ 全部含手续费</span></h3>
+      <table>
+        <tr><th style="width:16%">策略</th><th style="width:12%">交易窗数</th><th style="width:12%">双边率</th><th style="width:14%">总盈亏</th><th style="width:14%">最大回撤</th><th style="width:16%">手续费占毛利</th><th>结论</th></tr>
+        <tr><td>v8 共振</td><td class="num">312</td><td class="num up">68%</td><td class="num up">+$164</td><td class="num">2.1%</td><td class="num">31%</td><td style="color:var(--tx3)">当前最优 · 双边率最高</td></tr>
+        <tr><td>v7 收敛</td><td class="num">486</td><td class="num">54%</td><td class="num up">+$67</td><td class="num">3.8%</td><td class="num">38%</td><td style="color:var(--tx3)">交易多但单边亏拖累</td></tr>
+        <tr><td>v6 单信号</td><td class="num">1,104</td><td class="num dn">22%</td><td class="num dn">-$386</td><td class="num">9.4%</td><td class="num dn">61%</td><td style="color:var(--tx3)">被手续费+单边双重拖死</td></tr>
+      </table>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">切换策略前强制跑同数据集回放对比；上线前须在模拟盘连续盈利 ≥7 天（风控准入项）。</div>
+    </div>
+    <div class="card">
+      <h3>策略切换记录 <span class="sub">谁在什么时候切了什么</span></h3>
+      <table>
+        <tr><th style="width:16%">时间</th><th style="width:20%">变更</th><th>原因</th></tr>
+        <tr><td class="num">11-14 09:00</td><td>v7 → v8</td><td style="color:var(--tx3)">回放对比：双边率 54%→68%，模拟盘 5 天连盈达标</td></tr>
+        <tr><td class="num">11-06 15:20</td><td>v6 停用</td><td style="color:var(--tx3)">模拟盘连续 3 日净亏，手续费占毛利 &gt; 60%</td></tr>
+      </table>
+    </div>
+  </section>
+</div>
+<div class="mod" id="m-fut">
+
+  <section class="page active" id="p-fut-term">
+    <div class="card" style="margin-bottom:12px">
+      <h3>资产总览 <span class="sub">USDT 保证金 · BTC 深度视图 ｜ 期初 $8,222.03 · 入金 $0 · 出金 $0</span></h3>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(200px,280px);gap:12px;align-items:center">
+        <div class="metric"><div class="label">总权益</div><div class="val num" style="font-size:18px">$8,248.93</div><div class="hint">可用 $8,240.00 + 占用 $8.93</div></div>
+        <div class="metric"><div class="label">今日盈亏</div><div class="val num up" style="font-size:18px">+4.03</div><div class="hint">已实现 +4.10 ｜ 浮动 -0.07</div></div>
+        <div class="metric"><div class="label">累计盈亏（30天）</div><div class="val num up" style="font-size:18px">+26.90</div><div class="hint">扣费后 ｜ 盈利日 6/7</div></div>
+        <div class="metric"><div class="label">收益率（30天）</div><div class="val num up" style="font-size:18px">+0.33%</div><div class="hint">熔断线 -$50 未触发</div></div>
+        <div>
+          <div style="display:flex;gap:6px;margin-bottom:4px;font-size:11px"><button class="tag tag-gray" data-eq="eq-fut" data-p="0,45 23,47 46,44 69,46 92,48 115,45 138,47 161,43 184,45 207,42 230,44 253,39 280,41">1日</button><button class="tag tag-blue" data-eq="eq-fut" data-p="0,52 35,50 70,51 105,46 140,47 175,43 210,44 245,40 280,37">7日</button><button class="tag tag-gray" data-eq="eq-fut" data-p="0,56 25,54 50,55 75,51 100,52 125,49 150,50 175,47 200,48 225,44 250,45 280,37">30日</button><button class="tag tag-gray" data-eq="eq-fut" data-p="0,58 30,55 60,56 90,53 120,54 150,50 180,51 210,47 240,48 270,42 280,37">全部</button></div>
+          <svg viewBox="0 0 280 64" style="width:100%">
+            <line x1="0" y1="56" x2="280" y2="56" class="gridline" stroke-width="0.5"/>
+            <polyline id="eq-fut" points="0,52 35,50 70,51 105,46 140,47 175,43 210,44 245,40 280,37" fill="none" stroke="#185fa5" stroke-width="1.5"/>
+          </svg>
+          <div style="font-size:10px;color:var(--tx3)">权益曲线 · 含未实现盈亏</div>
+        </div>
+      </div>
+    </div>
+    <div class="term-grid">
+      <div class="card">
+        <h3>自选 <span class="sub">WS 实时</span></h3>
+        <table>
+          <tr><td>BTCUSDT</td><td class="num">97,412.5</td></tr>
+          <tr><td class="dn">ETHUSDT</td><td class="num dn">3,421.0</td></tr>
+          <tr><td class="up">SOLUSDT</td><td class="num up">212.40</td></tr>
+        </table>
+        <h3 style="margin-top:14px">信号面板 <span class="sub">实时 · 带数值</span></h3>
+        <div class="sig"><div class="sig-h"><span>VWAP 偏离</span><span class="num up">+0.12% · 看涨 68</span></div><div class="bar"><i style="width:68%;background:var(--up)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>RSI(14)</span><span class="num">54 · 中性</span></div><div class="bar"><i style="width:54%;background:var(--tx3)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>订单簿失衡</span><span class="num dn">买 38% / 卖 62%</span></div><div class="split-bar"><i style="width:38%;background:var(--up)"></i><i style="width:62%;background:var(--dn)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>资金费率方向</span><span class="num">0.0100% · 中性 50</span></div><div class="bar"><i style="width:50%;background:var(--tx3)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>波动率 (1m ATR)</span><span class="num wn">0.18% · 偏高 71</span></div><div class="bar"><i style="width:71%;background:var(--wn)"></i></div></div>
+      </div>
+      <div class="card">
+        <h3>BTCUSDT 永续 <span class="sub num" style="font-size:16px;color:var(--tx)">97,412.5</span></h3>
+        <div class="chart-box">
+          <svg viewBox="0 0 600 260" style="width:100%;height:100%" preserveAspectRatio="none">
+            <polyline points="0,210 40,196 80,216 120,168 160,180 200,140 240,154 280,118 320,130 360,98 400,110 440,76 480,88 520,60 560,72 600,50" fill="none" stroke="#185fa5" stroke-width="1.5"/>
+            <line x1="0" y1="130" x2="600" y2="130" stroke="#ef9f27" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="8" y="124" font-size="11" fill="var(--wn)">挂单价 97,400</text>
+          </svg>
+          <div class="axis">1m ｜ 5m ｜ 15m ｜ 1h ｜ 深度图</div>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:12px">
+          <div class="metric"><div class="label">24h最高</div><div class="val" style="font-size:16px;font-family:var(--mono)">98,120</div></div>
+          <div class="metric"><div class="label">24h最低</div><div class="val" style="font-size:16px;font-family:var(--mono)">95,830</div></div>
+          <div class="metric"><div class="label">资金费率</div><div class="val" style="font-size:16px;font-family:var(--mono)">0.0100%</div></div>
+          <div class="metric"><div class="label">标记价</div><div class="val" style="font-size:16px;font-family:var(--mono)">97,408</div></div>
+        </div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+          <div>
+            <h3>盘口 BTCUSDT <span class="sub">五档 · WS 实时</span></h3>
+            <table>
+              <tr><th style="width:36%">价格</th><th style="width:30%">数量(BTC)</th><th>累计</th></tr>
+              <tr><td class="num dn">97,418.0</td><td class="num" style="background:linear-gradient(to left,rgba(246,70,93,.12) 22%,transparent 22%)">0.42</td><td class="num">1.86</td></tr>
+              <tr><td class="num dn">97,416.5</td><td class="num" style="background:linear-gradient(to left,rgba(246,70,93,.12) 19%,transparent 19%)">0.35</td><td class="num">1.44</td></tr>
+              <tr><td class="num dn">97,415.0</td><td class="num" style="background:linear-gradient(to left,rgba(246,70,93,.12) 27%,transparent 27%)">0.51</td><td class="num">1.09</td></tr>
+              <tr><td class="num dn">97,414.0</td><td class="num" style="background:linear-gradient(to left,rgba(246,70,93,.12) 15%,transparent 15%)">0.28</td><td class="num">0.58</td></tr>
+              <tr><td class="num dn">97,413.0</td><td class="num" style="background:linear-gradient(to left,rgba(246,70,93,.12) 16%,transparent 16%)">0.30</td><td class="num">0.30</td></tr>
+              <tr><td colspan="3" style="text-align:center;font-size:11px"><span class="wn">价差 0.5</span> ｜ 最新 <span class="num" style="font-weight:500">97,412.5</span> ｜ 买 <span class="num up">38%</span> / 卖 <span class="num dn">62%</span></td></tr>
+              <tr><td class="num up">97,412.0</td><td class="num" style="background:linear-gradient(to left,rgba(46,189,133,.12) 13%,transparent 13%)">0.24</td><td class="num">0.24</td></tr>
+              <tr><td class="num up">97,411.0</td><td class="num" style="background:linear-gradient(to left,rgba(46,189,133,.12) 18%,transparent 18%)">0.33</td><td class="num">0.57</td></tr>
+              <tr><td class="num up">97,409.5</td><td class="num" style="background:linear-gradient(to left,rgba(46,189,133,.12) 21%,transparent 21%)">0.40</td><td class="num">0.97</td></tr>
+              <tr><td class="num up">97,408.5</td><td class="num" style="background:linear-gradient(to left,rgba(46,189,133,.12) 25%,transparent 25%)">0.47</td><td class="num">1.44</td></tr>
+              <tr><td class="num up">97,407.0</td><td class="num" style="background:linear-gradient(to left,rgba(46,189,133,.12) 19%,transparent 19%)">0.36</td><td class="num">1.80</td></tr>
+            </table>
+          </div>
+          <div>
+            <h3>最近成交 <span class="sub">逐笔 · WS</span></h3>
+            <table>
+              <tr><th style="width:34%">时间</th><th style="width:26%">价格</th><th style="width:20%">数量</th><th>方向</th></tr>
+              <tr><td class="num">20:31:02</td><td class="num up">97,412.5</td><td class="num">0.05</td><td class="up">主动买</td></tr>
+              <tr><td class="num">20:30:58</td><td class="num dn">97,411.0</td><td class="num">0.12</td><td class="dn">主动卖</td></tr>
+              <tr><td class="num">20:30:51</td><td class="num up">97,412.0</td><td class="num">0.03</td><td class="up">主动买</td></tr>
+              <tr><td class="num">20:30:44</td><td class="num up">97,413.0</td><td class="num">0.28</td><td class="up">主动买</td></tr>
+              <tr><td class="num">20:30:39</td><td class="num dn">97,410.5</td><td class="num">0.09</td><td class="dn">主动卖</td></tr>
+              <tr><td class="num">20:30:33</td><td class="num dn">97,411.5</td><td class="num">0.16</td><td class="dn">主动卖</td></tr>
+              <tr><td class="num">20:30:27</td><td class="num up">97,412.5</td><td class="num">0.21</td><td class="up">主动买</td></tr>
+              <tr><td class="num">20:30:19</td><td class="num dn">97,410.0</td><td class="num">0.07</td><td class="dn">主动卖</td></tr>
+            </table>
+            <div style="color:var(--tx3);font-size:11px;margin-top:6px">吃单前必看：卖一 97,413.0 上方 0.58 BTC，市价单 0.01 BTC 吃穿无滑点。</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>AI 自动执行 <span class="sub tag tag-green" style="font-weight:500">运行中 · 模拟</span></h3>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:12px;color:var(--tx2);white-space:nowrap">当前策略</span>
+          <select style="flex:1"><option>v8 · 5信号共振（运行中）</option><option>v7 · 收敛过滤（待命）</option><option>v6 · 单信号触发（已停用）</option></select>
+        </div>
+        <div class="check"><span>决策频率</span><span class="num">每 1m 窗口评估</span></div>
+        <div class="check"><span>决策模型</span><span class="num">deepseek-reasoner · 240ms</span></div>
+        <div class="check"><span>今日 AI 交易</span><span class="num">6 笔 ｜ 拒单 14 次</span></div>
+        <div class="check"><span>当前信号强度</span><span class="num">2/5 · 不开仓</span></div>
+        <h3 style="margin-top:12px">执行参数 <span class="sub">来自策略模块 · 只读</span></h3>
+        <div class="check"><span>单笔仓位上限</span><span class="num">0.02 BTC</span></div>
+        <div class="check"><span>杠杆上限</span><span class="num">3x</span></div>
+        <div class="check"><span>止损 / 止盈</span><span class="num">-0.15% / +0.60%</span></div>
+        <div class="check"><span>日亏损熔断</span><span class="num">$50 已用</span></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button style="flex:1;background:var(--wnbg);color:var(--wn);border-color:#e5b96b;font-weight:500">暂停 AI（模拟）</button>
+          <button style="flex:1">恢复</button>
+        </div>
+        <div style="color:var(--tx3);font-size:11px;margin-top:10px">AI 每笔开仓前在此展示决策依据（哪个信号触发），全部记录可在「复盘 → 历史逐笔记录」回看。</div>
+
+        <details style="margin-top:12px">
+          <summary style="cursor:pointer;color:var(--tx2);font-size:12px;font-weight:500">人工干预下单（折叠 · 平时不用）</summary>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+            <select><option>限价</option><option>市价</option></select>
+            <input placeholder="价格 97,400.0">
+            <input placeholder="数量 (BTC)">
+            <div style="display:flex;gap:6px;font-size:11px;color:var(--tx3);align-items:center">
+              杠杆 <span class="tag tag-gray">1x</span><span class="tag tag-blue">2x</span><span class="tag tag-gray">5x</span>
+            </div>
+            <button class="btn-long">买入/做多（模拟）</button>
+            <button class="btn-short" style="margin-top:0;opacity:.55">卖出/做空（模拟）</button>
+          </div>
+        </details>
+        <div class="fee-row">可用保证金 $8,240.00<br>AI 单笔预估手续费 $0.42（taker 0.05%）<br>人工单需二次确认才发送</div>
+      </div>
+    </div>
+    <div class="card term-bottom">
+      <h3>合约持仓 <span class="sub">1 单 · 仅 BTCUSDT</span></h3>
+      <table>
+        <tr><th style="width:14%">合约</th><th style="width:9%">方向</th><th style="width:9%">数量</th><th style="width:12%">开仓价</th><th style="width:12%">标记价</th><th style="width:9%">杠杆</th><th style="width:12%">强平价</th><th>未实现 / 操作</th></tr>
+        <tr><td>BTCUSDT</td><td style="color:var(--dn)">空</td><td class="num">0.01</td><td class="num">97,401</td><td class="num">97,408</td><td class="num">2x</td><td class="num">—</td><td><span class="num dn">-0.07</span> <button style="padding:2px 10px;font-size:11px;margin-left:8px">平仓</button></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="page" id="p-fut-pos">
+    <div class="grid" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)">
+      <div class="card">
+        <h3>持仓与挂单</h3>
+        <table style="margin-bottom:14px">
+          <tr><th style="width:16%">合约</th><th style="width:10%">方向</th><th style="width:10%">数量</th><th style="width:13%">开仓价</th><th style="width:13%">标记价</th><th style="width:12%">未实现</th><th>ROE</th></tr>
+          <tr><td>BTCUSDT</td><td style="color:var(--dn)">空</td><td class="num">0.01</td><td class="num">97,401</td><td class="num">97,408</td><td class="num dn">-0.07</td><td class="num dn">-0.07%</td></tr>
+        </table>
+        <h3>当前挂单</h3>
+        <table>
+          <tr><th style="width:20%">合约</th><th style="width:15%">类型</th><th style="width:12%">方向</th><th style="width:13%">价格</th><th style="width:13%">数量</th><th>操作</th></tr>
+          <tr><td>BTCUSDT</td><td>限价</td><td style="color:var(--dn)">平空</td><td class="num">97,200</td><td class="num">0.01</td><td><button style="padding:2px 10px;font-size:11px">撤单</button></td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>行情快照 <span class="sub">观察列表 · 交易仅 BTCUSDT</span></h3>
+          <table>
+            <tr><th style="width:24%">合约</th><th style="width:20%">最新</th><th style="width:18%">24h</th><th>资金费</th></tr>
+            <tr><td>BTCUSDT</td><td class="num">97,412.5</td><td class="num up">+1.2%</td><td class="num">0.0100%</td></tr>
+            <tr><td>ETHUSDT</td><td class="num">3,421.0</td><td class="num dn">-0.6%</td><td class="num">0.0085%</td></tr>
+            <tr><td>SOLUSDT</td><td class="num">212.40</td><td class="num up">+3.1%</td><td class="num">0.0120%</td></tr>
+          </table>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>成交记录 <span class="sub">含已实现盈亏</span></h3>
+          <div style="display:flex;gap:6px;margin-bottom:8px;font-size:11px">
+            <button class="tag tag-blue" data-tr data-sum="今日已实现 <span class='num up'>+4.10</span> ｜ 未实现 <span class='num dn'>-0.07</span> ｜ 手续费合计 <span class='num'>$0.49</span> ｜ 资产流水与权益曲线见「终端 → 资产总览」">今日</button>
+            <button class="tag tag-gray" data-tr data-sum="近7日已实现 <span class='num up'>+8.30</span> ｜ 未实现 <span class='num dn'>-0.07</span> ｜ 手续费合计 <span class='num'>$0.79</span> ｜ 资产流水与权益曲线见「终端 → 资产总览」">7日</button>
+            <button class="tag tag-gray" data-tr data-sum="近30日已实现 <span class='num up'>+17.50</span> ｜ 未实现 <span class='num dn'>-0.07</span> ｜ 手续费合计 <span class='num'>$1.60</span> ｜ 资产流水与权益曲线见「终端 → 资产总览」">30日</button>
+            <button class="tag tag-gray" data-tr data-sum="累计已实现 <span class='num up'>+22.60</span> ｜ 未实现 <span class='num dn'>-0.07</span> ｜ 手续费合计 <span class='num'>$2.10</span> ｜ 资产流水与权益曲线见「终端 → 资产总览」">全部</button>
+          </div>
+          <table>
+            <tr><th style="width:13%">时间</th><th style="width:19%">合约</th><th style="width:12%">方向</th><th style="width:15%">价格</th><th style="width:13%">手续费</th><th>已实现盈亏</th></tr>
+            <tr data-lvl="0"><td class="num">20:11</td><td>BTCUSDT</td><td>开空</td><td class="num">97,401</td><td class="num">$0.09</td><td style="color:var(--tx3)">持仓中</td></tr>
+            <tr data-lvl="0"><td class="num">19:47</td><td>BTCUSDT</td><td>平空</td><td class="num">97,300</td><td class="num">$0.11</td><td class="num up">+6.50</td></tr>
+            <tr data-lvl="0"><td class="num">18:55</td><td>BTCUSDT</td><td>止损平多</td><td class="num">97,760</td><td class="num">$0.19</td><td class="num dn">-2.40</td></tr>
+            <tr data-lvl="0"><td class="num">17:40</td><td>BTCUSDT</td><td>开多</td><td class="num">97,612</td><td class="num">$0.10</td><td style="color:var(--tx3)">持仓中</td></tr>
+            <tr data-lvl="1"><td class="num">11-19 21:44</td><td>BTCUSDT</td><td>平空</td><td class="num">97,590</td><td class="num">$0.10</td><td class="num up">+6.00</td></tr>
+            <tr data-lvl="1"><td class="num">11-18 16:05</td><td>BTCUSDT</td><td>平空</td><td class="num">97,650</td><td class="num">$0.12</td><td class="num dn">-1.80</td></tr>
+            <tr data-lvl="2"><td class="num">11-05 22:10</td><td>BTCUSDT</td><td>平多</td><td class="num">98,120</td><td class="num">$0.22</td><td class="num up">+4.60</td></tr>
+          </table>
+          <div class="fee-row" id="tr-sum">今日已实现 <span class="num up">+4.10</span> ｜ 未实现 <span class="num dn">-0.07</span> ｜ 手续费合计 <span class="num">$0.49</span> ｜ 资产流水与权益曲线见「终端 → 资产总览」</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="p-fut-bt">
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
+      <div class="metric"><div class="label">合约总收益（30天）</div><div class="val up">+3.1%</div><div class="hint">扣费后</div></div>
+      <div class="metric"><div class="label">最大回撤</div><div class="val">1.2%</div><div class="hint">上限 8%</div></div>
+      <div class="metric"><div class="label">交易笔数</div><div class="val">45</div><div class="hint">全部模拟</div></div>
+      <div class="metric"><div class="label">手续费占毛利</div><div class="val dn">18%</div><div class="hint">taker 0.05%</div></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>合约净值曲线 <span class="sub">含手续费 ｜ 30 天</span></h3>
+      <svg viewBox="0 0 900 160" style="width:100%">
+        <line x1="0" y1="140" x2="900" y2="140" class="gridline" stroke-width="0.5"/>
+        <polyline points="0,132 80,128 160,132 240,118 320,122 400,108 480,112 560,98 640,94 720,80 800,72 900,58" fill="none" stroke="#185fa5" stroke-width="1.5"/>
+        <text x="6" y="18" font-size="12" fill="var(--up)">+$3.1%（扣费后）</text>
+      </svg>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <h3>历史数据管理 <span class="sub">回测的数据地基</span></h3>
+      <table>
+        <tr><th style="width:22%">数据集</th><th style="width:14%">范围</th><th style="width:14%">条数</th><th style="width:16%">存储</th><th style="width:16%">最近更新</th><th>操作</th></tr>
+        <tr><td>Binance 合约 K 线</td><td class="num">10-21 ~ 今</td><td class="num">1,296,000</td><td><span class="tag tag-gray">Parquet 本地</span></td><td class="num">20:14:30</td><td><button style="padding:2px 10px;font-size:11px">导出 CSV</button></td></tr>
+        <tr><td>资金费率历史</td><td class="num">10-21 ~ 今</td><td class="num">4,320</td><td><span class="tag tag-gray">Parquet 本地</span></td><td class="num">20:00:00</td><td><button style="padding:2px 10px;font-size:11px">导出 CSV</button></td></tr>
+        <tr><td>成交与费用流水</td><td class="num">10-21 ~ 今</td><td class="num">1,864</td><td><span class="tag tag-gray">SQLite</span></td><td class="num">20:11:30</td><td><button style="padding:2px 10px;font-size:11px">导出 CSV</button></td></tr>
+        <tr><td>K 线缺失段</td><td class="num">—</td><td class="num">0</td><td><span class="tag tag-green">完整</span></td><td class="num">—</td><td>—</td></tr>
+      </table>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">K 线由 WS 增量落盘 + 每日对账补缺（REST 仅每日一次低权重拉取，不轮询）；回测读取本地 Parquet，不触交易所。</div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin-bottom:12px">
+      <div class="card">
+        <h3>按日汇总 <span class="sub">近 7 天 ｜ 扣费后</span></h3>
+        <table>
+          <tr><th style="width:18%">日期</th><th style="width:14%">笔数</th><th style="width:16%">胜率</th><th style="width:16%">盈亏</th><th style="width:18%">手续费</th><th>最大回撤</th></tr>
+          <tr><td class="num">11-20</td><td class="num">6</td><td class="num">67%</td><td class="num up">+8.30</td><td class="num">0.62</td><td class="num">0.4%</td></tr>
+          <tr><td class="num">11-19</td><td class="num">5</td><td class="num">60%</td><td class="num up">+3.15</td><td class="num">0.55</td><td class="num">0.6%</td></tr>
+          <tr><td class="num">11-18</td><td class="num">7</td><td class="num">57%</td><td class="num up">+5.60</td><td class="num">0.71</td><td class="num">0.9%</td></tr>
+          <tr><td class="num">11-17</td><td class="num">4</td><td class="num">50%</td><td class="num dn">-2.40</td><td class="num">0.44</td><td class="num">1.2%</td></tr>
+          <tr><td class="num">11-16</td><td class="num">8</td><td class="num">63%</td><td class="num up">+6.10</td><td class="num">0.83</td><td class="num">0.7%</td></tr>
+          <tr><td class="num">11-15</td><td class="num">7</td><td class="num">57%</td><td class="num up">+4.05</td><td class="num">0.69</td><td class="num">0.8%</td></tr>
+          <tr><td class="num">11-14</td><td class="num">5</td><td class="num">60%</td><td class="num up">+2.20</td><td class="num">0.51</td><td class="num">0.5%</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>历史盈亏归因 <span class="sub">30 天 ｜ 按合约与方向</span></h3>
+        <table>
+          <tr><th style="width:22%">合约</th><th style="width:14%">多/空</th><th style="width:14%">笔数</th><th style="width:20%">单笔均盈亏</th><th>合计贡献</th></tr>
+          <tr><td>BTCUSDT</td><td>空</td><td class="num">18</td><td class="num up">+1.85</td><td class="num up">+33.3</td></tr>
+          <tr><td>BTCUSDT</td><td>多</td><td class="num">9</td><td class="num dn">-0.42</td><td class="num dn">-3.8</td></tr>
+        </table>
+        <div style="color:var(--tx3);font-size:11px;margin-top:8px">本模块只做 BTCUSDT，所以归因看方向而不是看标的：做空 +33.3、做多 -3.8 → 多头方向连续负贡献，先只保留空头，多单需重新过回放。</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>历史逐笔记录 <span class="sub">11-17 ~ 今 ｜ 含 AI 决策依据</span></h3>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <select><option>近 3 天</option><option>近 7 天</option><option>近 30 天</option></select>
+        <button class="tag tag-blue" style="border:none">全部</button>
+        <button class="tag tag-green" style="border:none">盈利</button>
+        <button class="tag tag-red" style="border:none">亏损</button>
+        <button class="tag tag-gray" style="border:none">AI 拒单</button>
+      </div>
+      <div style="max-height:260px;overflow:auto">
+      <table>
+        <tr><th style="width:13%">时间</th><th style="width:13%">合约</th><th style="width:8%">方向</th><th style="width:8%">数量</th><th style="width:11%">开仓</th><th style="width:11%">平仓</th><th style="width:10%">盈亏</th><th style="width:9%">手续费</th><th>AI 决策依据</th></tr>
+        <tr><td class="num">11-20 20:11</td><td>BTCUSDT</td><td style="color:var(--dn)">开空</td><td class="num">0.01</td><td class="num">97,401</td><td class="num">持仓中</td><td class="num dn">-0.07</td><td class="num">0.09</td><td style="color:var(--tx3)">VWAP偏离+订单簿卖压共振</td></tr>
+        <tr><td class="num">11-20 19:47</td><td>BTCUSDT</td><td style="color:var(--dn)">平空</td><td class="num">0.01</td><td class="num">97,650</td><td class="num">97,300</td><td class="num up">+6.50</td><td class="num">0.11</td><td style="color:var(--tx3)">止盈目标 +0.6% 触发</td></tr>
+        <tr><td class="num">11-20 18:55</td><td>BTCUSDT</td><td style="color:var(--dn)">开多</td><td class="num">0.02</td><td class="num">97,880</td><td class="num">97,760</td><td class="num dn">-2.40</td><td class="num">0.19</td><td style="color:var(--tx3)">止损 -0.15% 触发</td></tr>
+        <tr><td class="num">11-20 18:30</td><td>BTCUSDT</td><td><span class="tag tag-gray">SKIP</span></td><td class="num">—</td><td class="num">—</td><td>—</td><td class="num">—</td><td class="num">—</td><td style="color:var(--tx3)">5信号仅2项一致 &lt; 门槛</td></tr>
+        <tr><td class="num">11-20 17:40</td><td>BTCUSDT</td><td style="color:var(--dn)">开多</td><td class="num">0.01</td><td class="num">97,612</td><td class="num">持仓中</td><td class="num dn">-0.08</td><td class="num">0.10</td><td style="color:var(--tx3)">5m 动量翻正 + RSI 48→56</td></tr>
+        <tr><td class="num">11-19 22:10</td><td>BTCUSDT</td><td style="color:var(--dn)">开多</td><td class="num">0.01</td><td class="num">97,500</td><td class="num">持仓平移</td><td class="num">—</td><td class="num">0.10</td><td style="color:var(--tx3)">SMA(8) 上穿 SMA(21)</td></tr>
+        <tr><td class="num">11-19 21:44</td><td>BTCUSDT</td><td style="color:var(--dn)">平空</td><td class="num">0.01</td><td class="num">97,650</td><td class="num">97,590</td><td class="num up">+6.00</td><td class="num">0.10</td><td style="color:var(--tx3)">资金费率转负+动量衰竭</td></tr>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="p-fut-strat">
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
+      <div class="card" style="border-color:#185fa5">
+        <h3>v8 · 5信号共振 <span class="tag tag-green">运行中</span></h3>
+        <div class="check"><span>信号</span><span class="num">RSI+动量+VWAP+SMA+订单簿</span></div>
+        <div class="check"><span>贝叶斯加权优势门槛</span><span class="num">≥2% 才开仓</span></div>
+        <div class="check"><span>止损 / 止盈</span><span class="num">-0.15% / +0.60%</span></div>
+        <div class="check"><span>近30天（扣费）</span><span class="num up">+3.1% ｜ 胜率 61%</span></div>
+        <button style="width:100%;margin-top:10px;background:var(--bg2)">查看回测详情</button>
+      </div>
+      <div class="card">
+        <h3>v7 · 收敛过滤 <span class="tag tag-gray">待命</span></h3>
+        <div class="check"><span>信号</span><span class="num">3信号收敛 + 1m/5m 共向</span></div>
+        <div class="check"><span>仓位</span><span class="num">半仓 · 杠杆上限 2x</span></div>
+        <div class="check"><span>止损 / 止盈</span><span class="num">-0.20% / +0.80%</span></div>
+        <div class="check"><span>近30天（扣费）</span><span class="num up">+1.4% ｜ 胜率 58%</span></div>
+        <button style="width:100%;margin-top:10px">切换到此策略（模拟）</button>
+      </div>
+      <div class="card" style="opacity:.6">
+        <h3>v6 · 单信号触发 <span class="tag tag-red">已停用</span></h3>
+        <div class="check"><span>信号</span><span class="num">任一信号亮即开仓</span></div>
+        <div class="check"><span>停用原因</span><span class="num dn">过拟合 · 11-17 回撤 3.2%</span></div>
+        <div class="check"><span>近30天（扣费）</span><span class="num dn">-4.8% ｜ 胜率 46%</span></div>
+        <button style="width:100%;margin-top:10px" disabled>已停用 · 数据留档</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <h3>策略对比 <span class="sub">同一 K 线数据集回放 ｜ 全部含手续费与资金费率</span></h3>
+      <table>
+        <tr><th style="width:16%">策略</th><th style="width:12%">笔数</th><th style="width:12%">胜率</th><th style="width:14%">总盈亏</th><th style="width:14%">最大回撤</th><th style="width:16%">手续费占毛利</th><th>结论</th></tr>
+        <tr><td>v8 共振</td><td class="num">45</td><td class="num up">61%</td><td class="num up">+$78</td><td class="num">1.2%</td><td class="num">18%</td><td style="color:var(--tx3)">94% 机会被拒，只留高置信</td></tr>
+        <tr><td>v7 收敛</td><td class="num">121</td><td class="num">58%</td><td class="num up">+$41</td><td class="num">2.6%</td><td class="num">24%</td><td style="color:var(--tx3)">交易频率高 2.7 倍，毛利被摊薄</td></tr>
+        <tr><td>v6 单信号</td><td class="num">390</td><td class="num dn">46%</td><td class="num dn">-$112</td><td class="num">9.4%</td><td class="num dn">47%</td><td style="color:var(--tx3)">弱信号放大了噪音亏损</td></tr>
+      </table>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">切换策略前强制同数据集回放对比；上线前须模拟盘连续盈利 ≥7 天（风控准入项）。</div>
+    </div>
+    <div class="card">
+      <h3>策略切换记录</h3>
+      <table>
+        <tr><th style="width:16%">时间</th><th style="width:20%">变更</th><th>原因</th></tr>
+        <tr><td class="num">11-13 10:00</td><td>v7 → v8</td><td style="color:var(--tx3)">回放对比：回撤 2.6%→1.2%，拒单率 94%，扣费后优势更稳</td></tr>
+        <tr><td class="num">11-08 14:30</td><td>v6 停用</td><td style="color:var(--tx3)">模拟盘 4 日 3 亏，最大单日 -$5.2</td></tr>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- ==================== 合约 · Top30 轮动 ==================== -->
+<div class="mod" id="m-top">
+
+  <section class="page active" id="p-top-term">
+    <div class="card" style="margin-bottom:12px">
+      <h3>资产总览 <span class="sub">USDT 保证金 · 榜单扫描视图 ｜ 期初 $2,000.00 · 与 BTC 视图独立统计</span></h3>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(200px,280px);gap:12px;align-items:center">
+        <div class="metric"><div class="label">总权益</div><div class="val num" style="font-size:18px">$2,041.20</div><div class="hint">可用 $1,960.00 + 占用 $81.20</div></div>
+        <div class="metric"><div class="label">今日盈亏</div><div class="val num up" style="font-size:18px">+21.84</div><div class="hint">已实现 +9.60 ｜ 浮动 +12.24</div></div>
+        <div class="metric"><div class="label">累计盈亏（30天）</div><div class="val num up" style="font-size:18px">+41.20</div><div class="hint">扣费后 ｜ 轮动 27 进 18 出</div></div>
+        <div class="metric"><div class="label">收益率（30天）</div><div class="val num up" style="font-size:18px">+2.06%</div><div class="hint">熔断线 -$100 未触发</div></div>
+        <div>
+          <div style="display:flex;gap:6px;margin-bottom:4px;font-size:11px"><button class="tag tag-gray" data-eq="eq-top" data-p="0,47 23,49 46,46 69,48 92,45 115,47 138,44 161,46 184,43 207,45 230,42 253,44 280,40">1日</button><button class="tag tag-blue" data-eq="eq-top" data-p="0,53 35,51 70,52 105,48 140,49 175,45 210,46 245,42 280,39">7日</button><button class="tag tag-gray" data-eq="eq-top" data-p="0,57 25,55 50,56 75,52 100,53 125,50 150,51 175,48 200,49 225,45 250,46 280,40">30日</button><button class="tag tag-gray" data-eq="eq-top" data-p="0,59 30,56 60,57 90,54 120,55 150,51 180,52 210,48 240,49 270,43 280,39">全部</button></div>
+          <svg viewBox="0 0 280 64" style="width:100%">
+            <line x1="0" y1="56" x2="280" y2="56" class="gridline" stroke-width="0.5"/>
+            <polyline id="eq-top" points="0,53 35,51 70,52 105,48 140,49 175,45 210,46 245,42 280,39" fill="none" stroke="#7c5cbf" stroke-width="1.5"/>
+          </svg>
+          <div style="font-size:10px;color:var(--tx3)">权益曲线 · 含未实现盈亏</div>
+        </div>
+      </div>
+    </div>
+    <div class="term-grid" style="grid-template-columns:244px minmax(0,1fr) 230px">
+      <div class="card">
+        <h3>涨幅榜 <span class="sub">24h 涨跌幅 · 5min 刷新</span></h3>
+        <table id="top-board">
+          <tr><th style="width:40%">合约</th><th style="width:22%">24h</th><th style="width:18%">量</th><th>状态</th></tr>
+          <tr data-sym="EVAA" data-px="0.8420" data-chg="+78.6%" data-vol="$0.36B" data-oi="$78M" data-vr="88" data-rank="1" data-mom="91" data-fr="72" data-imb="62"><td><span style="color:var(--tx3);font-size:10px">#1</span> EVAA<div style="font-size:10px;color:var(--tx3)">量 #88</div></td><td class="num up">+78.6%</td><td class="num">$0.36B</td><td><span class="tag tag-amber">新币 · 盘口薄</span></td></tr>
+          <tr data-sym="NAORI" data-px="0.1560" data-chg="+62.4%" data-vol="$0.24B" data-oi="$41M" data-vr="112" data-rank="2" data-mom="88" data-fr="68" data-imb="58"><td><span style="color:var(--tx3);font-size:10px">#2</span> NAORI<div style="font-size:10px;color:var(--tx3)">量 #112</div></td><td class="num up">+62.4%</td><td class="num">$0.24B</td><td><span class="tag tag-amber">新币 · 盘口薄</span></td></tr>
+          <tr data-sym="1000SATS" data-px="0.00002840" data-chg="+46.8%" data-vol="$0.21B" data-oi="$62M" data-vr="128" data-rank="3" data-mom="79" data-fr="55" data-imb="51"><td><span style="color:var(--tx3);font-size:10px">#3</span> 1000SATS<div style="font-size:10px;color:var(--tx3)">量 #128</div></td><td class="num up">+46.8%</td><td class="num">$0.21B</td><td><span class="tag tag-red">量不足</span></td></tr>
+          <tr data-sym="PENGU" data-px="0.0348" data-chg="+38.2%" data-vol="$0.42B" data-oi="$180M" data-vr="74" data-rank="4" data-mom="74" data-fr="60" data-imb="46"><td><span style="color:var(--tx3);font-size:10px">#4</span> PENGU<div style="font-size:10px;color:var(--tx3)">量 #74</div></td><td class="num up">+38.2%</td><td class="num">$0.42B</td><td><span class="tag tag-red">量不足</span></td></tr>
+          <tr data-sym="ORDI" data-px="38.42" data-chg="+29.6%" data-vol="$0.55B" data-oi="$310M" data-vr="52" data-rank="5" data-mom="66" data-fr="51" data-imb="44"><td><span style="color:var(--tx3);font-size:10px">#5</span> ORDI<div style="font-size:10px;color:var(--tx3)">量 #52</div></td><td class="num up">+29.6%</td><td class="num">$0.55B</td><td><span class="tag tag-gray">信号不足</span></td></tr>
+          <tr data-sym="ENA" data-px="0.6120" data-chg="+14.5%" data-vol="$1.10B" data-oi="$640M" data-vr="27" data-rank="6" data-mom="58" data-fr="49" data-imb="53"><td><span style="color:var(--tx3);font-size:10px">#6</span> ENA<div style="font-size:10px;color:var(--tx3)">量 #27</div></td><td class="num up">+14.5%</td><td class="num">$1.10B</td><td><span class="tag tag-blue">候选 · 观察中</span></td></tr>
+          <tr data-sym="TIA" data-px="1.796" data-chg="+12.7%" data-vol="$0.86B" data-oi="$520M" data-vr="24" data-rank="7" data-mom="61" data-fr="62" data-imb="55"><td><span style="color:var(--tx3);font-size:10px">#7</span> TIA<div style="font-size:10px;color:var(--tx3)">量 #24</div></td><td class="num up">+12.7%</td><td class="num">$0.86B</td><td><span class="tag tag-green">持仓中</span></td></tr>
+          <tr class="sel" data-sym="SUI" data-px="4.286" data-chg="+11.3%" data-vol="$1.80B" data-oi="$620M" data-vr="18" data-rank="8" data-mom="84" data-fr="58" data-imb="57"><td><span style="color:var(--tx3);font-size:10px">#8</span> SUI<div style="font-size:10px;color:var(--tx3)">量 #18</div></td><td class="num up">+11.3%</td><td class="num">$1.80B</td><td><span class="tag tag-green">持仓中</span></td></tr>
+        </table>
+        <div style="font-size:10px;color:var(--tx3);line-height:1.6;margin-top:6px">#1 EVAA、#2 NAORI 是新上市合约：涨幅最猛但量排名 #88/#112、点差 0.5%~0.8%，吃单滑点会把利润全吃掉。榜内 30 个仅 3 个量排名进前 30（ENA #27 / TIA #24 / SUI #18）。</div>
+        <h3 style="margin-top:14px">信号面板 <span class="sub" id="top-sel-sub">选中：SUI</span></h3>
+        <div class="sig"><div class="sig-h"><span>量能突变</span><span class="num up" id="top-mom-v">84 · 5m 量 +82%</span></div><div class="bar"><i id="top-mom" style="width:84%;background:var(--up)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>涨幅榜位次</span><span class="num up" id="top-pos-v">76 · #8</span></div><div class="bar"><i id="top-pos" style="width:76%;background:var(--up)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>资金费率极值</span><span class="num wn" id="top-fr-v">58 · 偏热</span></div><div class="bar"><i id="top-fr" style="width:58%;background:var(--wn)"></i></div></div>
+        <div class="sig"><div class="sig-h"><span>订单簿失衡</span><span class="num up" id="top-imb-v">买 57% / 卖 43%</span></div><div class="split-bar"><i id="top-imb-b" style="width:57%;background:var(--up)"></i><i id="top-imb-s" style="width:43%;background:var(--dn)"></i></div></div>
+      </div>
+      <div class="card">
+        <h3><span id="top-sym">SUIUSDT</span> 永续 <span class="sub num" id="top-px" style="font-size:16px;color:var(--tx)">4.286</span></h3>
+        <div class="chart-box">
+          <svg viewBox="0 0 600 260" style="width:100%;height:100%" preserveAspectRatio="none">
+            <polyline points="0,200 40,188 80,206 120,162 160,176 200,140 240,152 280,120 320,132 360,100 400,114 440,82 480,94 520,66 560,78 600,56" fill="none" stroke="#7c5cbf" stroke-width="1.5"/>
+            <line x1="0" y1="130" x2="600" y2="130" class="gridline" stroke-width="0.5" stroke-dasharray="4 3"/>
+            <text x="8" y="124" font-size="11" fill="var(--tx3)">观察 1 根 15m K 线确认后进场</text>
+          </svg>
+          <div class="axis">1m ｜ 5m ｜ 15m ｜ 1h</div>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:12px">
+          <div class="metric"><div class="label">24h 涨幅</div><div class="val num up" id="top-chg" style="font-size:16px;font-family:var(--mono)">+11.3%</div></div>
+          <div class="metric"><div class="label">24h 量</div><div class="val" id="top-vol" style="font-size:16px;font-family:var(--mono)">$1.80B</div></div>
+          <div class="metric"><div class="label">未平仓 OI</div><div class="val" id="top-oi" style="font-size:16px;font-family:var(--mono)">$620M</div></div>
+          <div class="metric"><div class="label">量排名 / 榜位</div><div class="val" id="top-vr" style="font-size:16px;font-family:var(--mono)">#18 / #8</div></div>
+        </div>
+        <div style="color:var(--tx3);font-size:11px;margin-top:8px">点击左栏榜单行切换主视图；深度五档与逐笔成交在「BTC 主力」终端为常驻完整版，本模块为扫描视图（进场前自动切主力终端确认盘口）。</div>
+      </div>
+      <div class="card">
+        <h3>AI 自动执行 <span class="sub tag tag-green" style="font-weight:500">运行中 · 模拟</span></h3>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:12px;color:var(--tx2);white-space:nowrap">当前策略</span>
+          <select style="flex:1"><option>R1 · 流动性轮动（运行中）</option><option>R2 · 量价背离（回测中）</option></select>
+        </div>
+        <div class="check"><span>观察范围</span><span class="num">涨幅榜（24h 涨跌幅排序）</span></div>
+        <div class="check"><span>进场门槛</span><span class="num">由策略 R1 决定 · 见策略管理</span></div>
+        <div class="check"><span>决策模型</span><span class="num">deepseek-reasoner · 240ms</span></div>
+        <div class="check"><span>今日轮动</span><span class="num">3 进 2 出 ｜ 拒单 9 次</span></div>
+        <div class="check"><span>并发上限</span><span class="num">最多 2 标的持仓</span></div>
+        <h3 style="margin-top:12px">执行参数 <span class="sub">来自策略模块 · 只读</span></h3>
+        <div class="check"><span>单笔仓位上限</span><span class="num">$200</span></div>
+        <div class="check"><span>杠杆上限</span><span class="num">2x</span></div>
+        <div class="check"><span>止损 / 止盈</span><span class="num">-0.5% / +1.2%</span></div>
+        <div class="check"><span>强制出场</span><span class="num">出榜即平 ｜ 持仓 ≤4h</span></div>
+        <div class="check"><span>日亏损熔断</span><span class="num">$22 / $100 已用</span></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button style="flex:1;background:var(--wnbg);color:var(--wn);border-color:#e5b96b;font-weight:500">暂停 AI（模拟）</button>
+          <button style="flex:1">恢复</button>
+        </div>
+        <div class="fee-row">可用保证金 $1,960.00<br>轮动逻辑：只吃榜内流动性，出榜/量枯竭即平<br>人工单需二次确认才发送</div>
+      </div>
+    </div>
+    <div class="card term-bottom">
+      <h3>轮动持仓 <span class="sub">2 标的 ｜ 并发上限 2</span></h3>
+      <table>
+        <tr><th style="width:14%">合约</th><th style="width:9%">方向</th><th style="width:9%">数量</th><th style="width:12%">开仓价</th><th style="width:12%">标记价</th><th style="width:14%">入榜时间</th><th>未实现 / 操作</th></tr>
+        <tr><td>SUIUSDT</td><td style="color:var(--dn)">多</td><td class="num">40</td><td class="num">4.120</td><td class="num">4.286</td><td class="num">11-20 10:12 · 榜#8</td><td><span class="num up">+6.64</span> <button style="padding:2px 10px;font-size:11px;margin-left:8px">平仓</button></td></tr>
+        <tr><td>TIAUSDT</td><td style="color:var(--dn)">多</td><td class="num">100</td><td class="num">1.740</td><td class="num">1.796</td><td class="num">11-20 09:40 · 榜#7</td><td><span class="num up">+5.60</span> <button style="padding:2px 10px;font-size:11px;margin-left:8px">平仓</button></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="page" id="p-top-rank">
+    <div class="card" style="margin-bottom:12px">
+      <h3>轮动队列 <span class="sub">每行 = 一次入选 / 移出决策依据</span></h3>
+      <table>
+        <tr><th style="width:14%">时间</th><th style="width:15%">合约</th><th style="width:13%">动作</th><th style="width:36%">依据</th><th>状态</th></tr>
+        <tr><td class="num">11-20 10:12</td><td>SUIUSDT</td><td><span class="tag tag-green">入选建仓</span></td><td style="color:var(--tx3)">涨幅榜 #10→#8 · 量能 5m +82% · 量排名 #18 · 买压 57%</td><td>持仓中</td></tr>
+        <tr><td class="num">11-20 09:40</td><td>TIAUSDT</td><td><span class="tag tag-green">入选建仓</span></td><td style="color:var(--tx3)">涨幅榜 #9→#7 · 资金费率极值 0.031% · 量 #24</td><td>持仓中</td></tr>
+        <tr><td class="num">11-20 09:31</td><td>ENAUSDT</td><td><span class="tag tag-blue">观察中</span></td><td style="color:var(--tx3)">量 #27 已过门槛，等 1 根 15m K 线确认（防插针）</td><td>候选</td></tr>
+        <tr><td class="num">11-19 22:00</td><td>ACTUSDT</td><td><span class="tag tag-red">移出平仓</span></td><td style="color:var(--tx3)">跌出涨幅榜 #5→#34 · 量枯竭 → 市价平 +1.80</td><td>已平</td></tr>
+        <tr><td class="num">11-19 15:30</td><td>EVAA</td><td><span class="tag tag-gray">观望</span></td><td style="color:var(--tx3)">涨幅榜 #1（+78.6%）但量 #88、点差 0.6% → 不过策略门槛</td><td>—</td></tr>
+      </table>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">以上为 <b>策略 R1 的参数</b>（进榜观察 1 根 15m K 线确认、出榜/量枯竭/超 4h 平仓），可在「策略管理 → R1」修改；本页只负责记录每次入选/移出的依据，不做平台层强制。</div>
+    </div>
+    <div class="card">
+        <h3>榜单数据源与刷新 <span class="sub">只决定「看什么」，不决定「能不能做」</span></h3>
+      <div class="check"><span>榜单性质</span><span class="num">涨幅榜 · 24h 涨跌幅排序</span></div>
+      <div class="check"><span>量排名作用</span><span class="num">仅作流动性参考（策略门槛使用）</span></div>
+      <div class="check"><span>是否可交易</span><span class="num">由策略 R1 参数判定，页面不拦</span></div>
+      <div class="check"><span>榜单来源</span><span class="num">币安 24h 涨跌幅排行（涨幅榜）</span></div>
+      <div class="check"><span>刷新频率</span><span class="num">5min / 次 · 单次权重 ≈5</span></div>
+      <div class="check"><span>REST 消耗</span><span class="num">288 次/天 · 占日配额 &lt; 1%</span></div>
+      <div class="check"><span>榜内标的行情</span><span class="up">合并 WS 订阅（≤30 流）</span></div>
+      <div class="check"><span>缺失补抓</span><span class="num">每日对账补缺 · 不实时轮询</span></div>
+    </div>
+  </section>
+
+  <section class="page" id="p-top-strat">
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:12px">
+      <div class="card" style="border-color:#7c5cbf">
+        <h3>R1 · 流动性轮动 <span class="tag tag-green">运行中</span></h3>
+        <div class="check"><span>信号</span><span class="num">涨幅榜位次+量能突变+资金费极值+订单簿</span></div>
+        <div class="check"><span>进场门槛（策略参数）</span><span class="num">24h量 ≥$5亿 · OI ≥$1亿 · 榜内 ≤30</span></div>
+        <div class="check"><span>进榜确认</span><span class="num">观察 1 根 15m K 线（防插针）</span></div>
+        <div class="check"><span>周期 / 出场</span><span class="num">≤4h · 出榜即平 · 止损 -0.5%</span></div>
+        <div class="check"><span>并发 / 仓位</span><span class="num">≤2 标的 · 单笔 ≤$200 · 2x</span></div>
+        <div class="check"><span>近30天（扣费）</span><span class="num up">+2.06% ｜ 轮动 27 进 18 出</span></div>
+        <div class="check"><span>手续费占毛利</span><span class="num wn">42%</span></div>
+        <button style="width:100%;margin-top:10px;background:var(--bg2)">查看回测详情</button>
+      </div>
+      <div class="card">
+        <h3>R2 · 量价背离 <span class="tag tag-gray">回测中</span></h3>
+        <div class="check"><span>信号</span><span class="num">价新高但量衰减 / 量增价滞</span></div>
+        <div class="check"><span>定位</span><span class="num">R1 的出场增强 · 非独立开仓</span></div>
+        <div class="check"><span>回放对比</span><span class="num">进行中 · 预计 +0.4% 增量</span></div>
+        <div class="check"><span>上线条件</span><span class="num">回放达标 + 模拟盘 7 天</span></div>
+        <button style="width:100%;margin-top:10px" disabled>回测中 · 暂不可切换</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>策略切换记录 <span class="sub">谁在什么时候切了什么</span></h3>
+      <table>
+        <tr><th style="width:16%">时间</th><th style="width:22%">变更</th><th>原因</th></tr>
+        <tr><td class="num">11-08 10:00</td><td>R1 首次上线（模拟）</td><td style="color:var(--tx3)">回放对比通过：轮动 27 进 18 出，手续费占毛利 42% 可接受</td></tr>
+      </table>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">与 BTC 主力账本完全独立：本模块不交易 BTCUSDT（它归主力账本），避免两边同时吃 BTC 深度互相干扰。</div>
+    </div>
+  </section>
+
+  <section class="page" id="p-top-bt">
+    <div class="card" style="margin-bottom:12px">
+      <h3>资产总览（复盘期） <span class="sub">Top30 轮动 · 近 30 天曲线见「终端 → 资产总览」</span></h3>
+      <svg viewBox="0 0 900 160" style="width:100%">
+        <line x1="0" y1="140" x2="900" y2="140" class="gridline" stroke-width="0.5"/>
+        <polyline points="0,134 80,130 160,133 240,120 320,124 400,110 480,114 560,100 640,96 720,84 800,78 900,62" fill="none" stroke="#7c5cbf" stroke-width="1.5"/>
+        <text x="6" y="18" font-size="12" fill="var(--up)">+$2.06%（扣费后）</text>
+      </svg>
+    </div>
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+      <div class="card">
+        <h3>按日汇总 <span class="sub">近 7 天 ｜ 扣费后</span></h3>
+        <table>
+          <tr><th style="width:18%">日期</th><th style="width:14%">轮动次数</th><th style="width:16%">胜率</th><th style="width:16%">盈亏</th><th style="width:16%">手续费</th><th>最大回撤</th></tr>
+          <tr><td class="num">11-20</td><td class="num">5</td><td class="num">60%</td><td class="num up">+6.40</td><td class="num">0.31</td><td class="num">0.3%</td></tr>
+          <tr><td class="num">11-19</td><td class="num">4</td><td class="num">50%</td><td class="num up">+2.10</td><td class="num">0.28</td><td class="num">0.5%</td></tr>
+          <tr><td class="num">11-18</td><td class="num">6</td><td class="num">50%</td><td class="num up">+3.60</td><td class="num">0.42</td><td class="num">0.7%</td></tr>
+          <tr><td class="num">11-17</td><td class="num">3</td><td class="num">33%</td><td class="num dn">-1.90</td><td class="num">0.19</td><td class="num">0.9%</td></tr>
+          <tr><td class="num">11-16</td><td class="num">5</td><td class="num">60%</td><td class="num up">+4.20</td><td class="num">0.35</td><td class="num">0.4%</td></tr>
+          <tr><td class="num">11-15</td><td class="num">4</td><td class="num">75%</td><td class="num up">+5.10</td><td class="num">0.27</td><td class="num">0.6%</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>历史盈亏归因 <span class="sub">30 天 ｜ 按标的</span></h3>
+        <table>
+          <tr><th style="width:24%">标的</th><th style="width:18%">轮动次数</th><th style="width:20%">单次均盈亏</th><th>合计贡献</th></tr>
+          <tr><td>SUIUSDT</td><td class="num">7</td><td class="num up">+2.60</td><td class="num up">+18.2</td></tr>
+          <tr><td>TIAUSDT</td><td class="num">6</td><td class="num up">+1.10</td><td class="num up">+6.6</td></tr>
+          <tr><td>PENGUUSDT</td><td class="num">5</td><td class="num dn">-0.80</td><td class="num dn">-4.0</td></tr>
+          <tr><td>ORDIUSDT</td><td class="num">4</td><td class="num dn">-1.20</td><td class="num dn">-4.8</td></tr>
+        </table>
+        <div style="color:var(--tx3);font-size:11px;margin-top:8px">PENGU 与 ORDI 连续负贡献 → 已加入观察名单，再亏 2 次自动移出候选池。</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ==================== 全局 ==================== -->
+<div class="mod" id="m-g">
+
+  <section class="page active" id="p-risk">
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>实盘准入检查 <span class="sub">全部 ✓ 才允许切换 LIVE</span></h3>
+          <div class="check"><span>API Key 仅交易权限（无提现）</span><span class="up">✓ 通过</span></div>
+          <div class="check"><span>IP 白名单已配置</span><span class="up">✓ 通过</span></div>
+          <div class="check"><span>WebSocket 心跳正常（近 1h）</span><span class="up">✓ 通过</span></div>
+          <div class="check"><span>REST 无自动重试逻辑</span><span class="up">✓ 通过</span></div>
+          <div class="check"><span>未知定时任务已清零</span><span class="wn">⚠ 2 项待确认</span></div>
+          <div class="check"><span>三个板块模拟盘均连续盈利 ≥ 7 天</span><span class="dn">✗ 未达标</span></div>
+        </div>
+        <div class="card">
+          <h3>分板块限额</h3>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span><i class="mod-dot poly" style="margin-right:6px"></i>预测 · 日亏损预算</span><span class="num">$86 / $150</span></div><div class="bar"><i style="width:57%;background:#ba7517"></i></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span><i class="mod-dot fut" style="margin-right:6px"></i>合约 · BTC 主力 · 日亏损预算</span><span class="num">$50 / $150</span></div><div class="bar"><i style="width:33%;background:#185fa5"></i></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span><i class="mod-dot top" style="margin-right:6px"></i>合约 · Top30 轮动 · 日亏损预算</span><span class="num">$22 / $100</span></div><div class="bar"><i style="width:22%;background:#7c5cbf"></i></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>REST 配额（分钟）</span><span class="num">38 / 1200</span></div><div class="bar"><i style="width:3%;background:#3b6d11"></i></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>WS 断线次数（24h）</span><span class="num">0 次</span></div><div class="bar"><i style="width:0%"></i></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>LLM Token 预算（日）</span><span class="num">1.2M / 5M</span></div><div class="bar"><i style="width:24%;background:#639922"></i></div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>熔断开关</h3>
+          <div class="check"><span>单板块日亏损达限 → 仅停该板块</span><span class="tag tag-green">已启用</span></div>
+          <div class="check"><span>总日亏损 $300 → 全局停机</span><span class="tag tag-green">已启用</span></div>
+          <div class="check"><span>WS 断线 &gt; 30 秒 → 暂停下单</span><span class="tag tag-green">已启用</span></div>
+          <div class="check"><span>REST 限流 &gt; 80% → 拒绝新单</span><span class="tag tag-green">已启用</span></div>
+          <div class="check"><span>手动全局急停</span><button style="padding:3px 14px;font-size:11px;background:var(--dnbg);color:var(--dn);border-color:#f09595;font-weight:500">急停（模拟）</button></div>
+        </div>
+        <div class="card">
+          <h3>模式切换</h3>
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0">
+            <span class="tag tag-amber" style="padding:4px 14px;font-size:12px">当前：模拟盘</span>
+            <span style="color:var(--tx3);font-size:12px">→</span>
+            <button style="font-size:12px;color:var(--tx3)" disabled>切换实盘（准入未通过）</button>
+          </div>
+          <div style="color:var(--tx3);font-size:11px;line-height:1.7">实盘切换不在页面提供按钮，须修改 .env 的 TRADING_MODE=live 并重启；三板块可分别设置 live（PRED_LIVE / FUT_BTC_LIVE / FUT_TOP_LIVE），互不影响，一个板块熔断不拖累其余。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="p-keys">
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>连接状态</h3>
+          <div class="check"><span>Polymarket CLOB WebSocket</span><span><i class="status-dot ok"></i>正常 · 38ms</span></div>
+          <div class="check"><span>币安 Futures WebSocket</span><span><i class="status-dot ok"></i>正常 · 42ms</span></div>
+          <div class="check"><span>币安 REST（限速池）</span><span><i class="status-dot bad"></i>38/1200 · 权重计费</span></div>
+          <div class="check"><span>Polygon RPC（结算）</span><span><i class="status-dot ok"></i>正常</span></div>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>钱包连接 <span class="sub">EIP-1193 · Polygon</span></h3>
+          <div class="check wallet-status"><span>Polymarket 钱包</span><span class="wn">未连接 · 模拟盘允许不连</span></div>
+          <div class="check"><span>地址类型</span><span class="num">EOA + Proxy（Polymarket 抽象账户）</span></div>
+          <div class="check"><span>USDC 余额</span><span class="num">3,210.45</span></div>
+          <div class="check"><span>授权额度</span><span class="num">USDC → CTF · 无上限</span></div>
+          <div class="check"><span>签名模式</span><span class="num">EIP-712 · 本地签名，私钥不出沙箱</span></div>
+          <button class="mini wallet-toggle" style="width:100%;margin-top:10px;font-weight:500">连接钱包（MetaMask / Rabby）</button>
+        </div>
+        <div class="card">
+          <h3>定时任务扫描 <span class="sub">11-12 IP 封禁排查项</span></h3>
+          <div class="check"><span>crontab（当前用户）</span><span class="wn">1 项待确认</span></div>
+          <div class="check"><span>launchd / launchctl</span><span class="wn">1 项待确认</span></div>
+          <div class="check"><span>进程内 setInterval 长轮询</span><span class="up">✓ 未发现</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>API 密钥状态 <span class="sub">密钥永不出现在页面</span></h3>
+          <div class="check"><span>BINANCE_API_KEY</span><span class="num">Xf8k…9dQ2（.env）</span></div>
+          <div class="check"><span>权限</span><span class="up">读取 + 合约交易 ｜ 无提现</span></div>
+          <div class="check"><span>IP 白名单</span><span class="up">1 个 IP 已绑定</span></div>
+          <div class="check"><span>POLYMARKET 私钥</span><span class="num">本地加密存储</span></div>
+        </div>
+        <div class="card">
+          <h3>环境配置</h3>
+          <div class="check"><span>TRADING_MODE</span><span class="num">paper</span></div>
+          <div class="check"><span>PRED_LIVE / FUT_BTC_LIVE / FUT_TOP_LIVE</span><span class="num">false / false / false</span></div>
+          <div class="check"><span>LLM_ROUTER</span><span class="num">deepseek → openai → local</span></div>
+          <div class="check"><span>行情来源</span><span class="up">WebSocket only（无 REST 轮询）</span></div>
+          <div class="check"><span>服务自启</span><span class="wn">未配置</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin-top:12px">
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <h3>AI 模型接入 <span class="sub">LLM Router · 决策增强层</span></h3>
+          <div class="check"><span>主模型</span><span class="num">DeepSeek · deepseek-reasoner</span></div>
+          <div class="check"><span>备用模型</span><span class="num">OpenAI · codex-mini（代码/策略脚本）</span></div>
+          <div class="check"><span>最终兜底</span><span class="up">本地规则引擎（AI 不在线不停机）</span></div>
+          <div class="check"><span>降级链</span><span class="num">超时 3s → 备用 → 本地规则</span></div>
+          <div class="check"><span>角色边界</span><span class="num">AI 只打分给参数，不直接下单</span></div>
+        </div>
+        <div class="card">
+          <h3>模型密钥与用量 <span class="sub">密钥在 .env · 页面只显掩码</span></h3>
+          <div class="check"><span>DEEPSEEK_API_KEY</span><span class="num">sk-d3…7f（.env）</span></div>
+          <div class="check"><span>OPENAI_API_KEY</span><span class="num">sk-oa…c2（.env · 备用）</span></div>
+          <div class="check"><span>今日 Token</span><span class="num">输入 0.8M / 输出 0.4M</span></div>
+          <div class="check"><span>今日费用</span><span class="num">$0.62</span></div>
+          <div class="check"><span>日预算熔断</span><span class="wn">$5 达限 → 自动回落本地规则</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>AI 调用边界 <span class="sub">安全约束 · 逐条可审计</span></h3>
+        <div class="check"><span>AI 输入</span><span class="num">只读行情快照 + 信号值（脱敏）</span></div>
+        <div class="check"><span>AI 输出</span><span class="num">白名单字段：置信度/仓位系数</span></div>
+        <div class="check"><span>Prompt 注入防护</span><span class="up">行情数据模板化传入 · 不拼用户文本</span></div>
+        <div class="check"><span>决策留痕</span><span class="num">prompt 摘要+输出存 SQLite 可回放</span></div>
+        <div class="check"><span>换模型</span><span class="num">视同换策略 · 须回放对比+模拟盘 7 天</span></div>
+        <div class="check"><span>API 失败处理</span><span class="num">无自动重试 · 失败即回落本地规则</span></div>
+        <div style="color:var(--tx3);font-size:11px;margin-top:8px">设计原则：LLM 是「顾问」不是「交易员」——规则引擎拥有下单权，AI 的置信度只作为规则的一个输入因子，出问题永远可回退到纯规则。</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="p-log">
+    <div class="card">
+      <h3>事件日志 <span class="sub">可按板块筛选</span></h3>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="tag tag-blue" style="border:none">全部</button>
+        <button class="tag tag-pink" style="border:none">预测</button>
+        <button class="tag tag-blue" style="border:none">合约</button>
+        <button class="tag tag-gray" style="border:none">FILL</button>
+        <button class="tag tag-gray" style="border:none">SKIP</button>
+        <button class="tag tag-gray" style="border:none">RISK</button>
+        <button class="tag tag-gray" style="border:none">WS</button>
+      </div>
+      <div>
+        <div class="logline"><span class="t">20:14:02</span><span class="tag tag-pink">预测</span> <span class="tag tag-green">FILL</span> BTC-5m-20:05 双边成交 成本 0.58 / 20 份</div>
+        <div class="logline"><span class="t">20:12:47</span><span class="tag tag-pink">预测</span> <span class="tag tag-amber">SKIP</span> ETH-1m-20:13 两腿和 1.00 &gt; 0.95 拒单</div>
+        <div class="logline"><span class="t">20:11:30</span><span class="tag tag-blue">合约</span> <span class="tag tag-green">FILL</span> 模拟开空 BTCUSDT 0.01 @ 97,401</div>
+        <div class="logline"><span class="t">20:10:15</span><span class="tag tag-blue">合约</span> <span class="tag tag-blue">WS</span> 币安订单流重连成功 延迟 42ms</div>
+        <div class="logline"><span class="t">20:09:58</span><span class="tag tag-pink">预测</span> <span class="tag tag-red">RISK</span> 单边止损 ETH-1m-20:07 -0.10（时间止损）</div>
+        <div class="logline"><span class="t">20:08:31</span><span class="tag tag-gray">全局</span> <span class="tag tag-gray">SYS</span> REST 权重 38/1200 正常区间</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+</main>
+<footer id="page-foot">聚合控制台 · 数据层：AI-23 后端（dashboard.py · 127.0.0.1:8931）｜ 未连后端时显示示例数据 ｜ 所有下单按钮均不触达真实交易所 ｜ 旧看板保留在 /legacy.html</footer>
+
+<script>
+const SUB={
+  poly:[["poly-term","终端"],["poly-queue","窗口队列"],["poly-strat","策略管理"],["poly-bt","复盘"]],
+  fut:[["fut-term","终端"],["fut-pos","持仓与挂单"],["fut-strat","策略管理"],["fut-bt","复盘"]],
+  top:[["top-term","终端"],["top-rank","轮动队列"],["top-strat","策略管理"],["top-bt","复盘"]],
+  g:[["risk","风控中心"],["keys","连接与密钥"],["log","事件日志"]]
+};
+const subnav=document.getElementById("subnav");
+function showMod(m){
+  document.querySelectorAll("nav.top button").forEach(b=>b.classList.toggle("active",b.dataset.m===m));
+  document.querySelectorAll(".mod").forEach(x=>x.classList.remove("active"));
+  document.getElementById("m-"+m).classList.add("active");
+  subnav.innerHTML="";
+  SUB[m].forEach(([id,name],i)=>{
+    const b=document.createElement("button");
+    b.textContent=name; if(i===0)b.classList.add("active");
+    b.onclick=()=>{
+      subnav.querySelectorAll("button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      document.querySelectorAll("#m-"+m+" .page").forEach(p=>p.classList.remove("active"));
+      document.getElementById("p-"+id).classList.add("active");
+    };
+    subnav.appendChild(b);
+  });
+}
+document.querySelectorAll("nav.top button").forEach(b=>b.onclick=()=>showMod(b.dataset.m));
+showMod("poly");
+
+// 权益曲线周期切换（1日/7日/30日/全部）
+document.querySelectorAll("[data-eq]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-eq="'+b.dataset.eq+'"]').forEach(x=>{x.classList.remove("tag-blue");x.classList.add("tag-gray")});
+  b.classList.remove("tag-gray");b.classList.add("tag-blue");
+  const line=document.getElementById(b.dataset.eq);
+  if(line&&b.dataset.p)line.setAttribute("points",b.dataset.p);
+});
+
+// 成交记录周期筛选（今日/7日/30日/全部）
+document.querySelectorAll("[data-tr]").forEach(b=>b.onclick=()=>{
+  const card=b.closest(".card");
+  card.querySelectorAll("[data-tr]").forEach(x=>{x.classList.remove("tag-blue");x.classList.add("tag-gray")});
+  b.classList.remove("tag-gray");b.classList.add("tag-blue");
+  const lvl={"今日":0,"7日":1,"30日":2,"全部":3}[b.textContent.trim()];
+  card.querySelectorAll("tr[data-lvl]").forEach(r=>r.style.display=(+r.dataset.lvl<=lvl)?"":"none");
+  const sum=document.getElementById("tr-sum");
+  if(sum&&b.dataset.sum)sum.innerHTML=b.dataset.sum;
+});
+
+// 涨幅榜：点行切换主视图与信号面板
+const topRows=document.querySelectorAll("#top-board tr[data-sym]");
+topRows.forEach(r=>r.onclick=()=>{
+  topRows.forEach(x=>x.classList.remove("sel"));
+  r.classList.add("sel");
+  const d=r.dataset;
+  document.getElementById("top-sym").textContent=d.sym+"USDT";
+  document.getElementById("top-px").textContent=d.px;
+  document.getElementById("top-chg").textContent=d.chg;
+  document.getElementById("top-vol").textContent=d.vol;
+  document.getElementById("top-oi").textContent=d.oi;
+  document.getElementById("top-vr").textContent="#"+d.vr+" / #"+d.rank;
+  document.getElementById("top-sel-sub").textContent="选中："+d.sym;
+  const mom=+d.mom, fr=+d.fr, imb=+d.imb;
+  const pos=Math.max(30,92-(+d.rank)*2);
+  const setBar=(id,val)=>{const el=document.getElementById(id);if(el)el.style.width=val+"%";};
+  setBar("top-mom",mom); document.getElementById("top-mom-v").textContent=mom+" · 5m 量 +"+(mom-2)+"%";
+  setBar("top-pos",pos); document.getElementById("top-pos-v").textContent=pos+" · #"+d.rank;
+  setBar("top-fr",fr);   document.getElementById("top-fr-v").textContent=fr+" · "+(fr>=70?"过热":fr>=55?"偏热":"中性");
+  setBar("top-imb-b",imb); setBar("top-imb-s",100-imb);
+  document.getElementById("top-imb-v").textContent="买 "+imb+"% / 卖 "+(100-imb)+"%";
+});
+const themeBtn=document.getElementById("themeBtn");
+themeBtn.onclick=()=>{
+  const dark=document.documentElement.dataset.theme!=="dark";
+  document.documentElement.dataset.theme=dark?"dark":"";
+  themeBtn.textContent=dark?"亮色":"暗色";
+};
+
+// 钱包连接（模拟演示）
+let walletOn=false;
+document.querySelectorAll(".wallet-toggle").forEach(b=>b.onclick=()=>{
+  walletOn=!walletOn;
+  document.querySelectorAll(".wallet-toggle").forEach(x=>x.textContent=walletOn?"0x9a9d…F3a2 · 已连接":"连接钱包");
+  document.querySelectorAll(".wallet-status span:last-child").forEach(s=>{
+    s.innerHTML=walletOn?'<span class="up">已连接 · 0x9a9d…F3a2（Polygon）</span>':'<span class="wn">未连接 · 模拟盘允许不连</span>';
+  });
+});
+</script>
+
+<script>
+/* ============================================================
+   实时数据接入层 · 对接 AI-23 后端（dashboard.py · 127.0.0.1:8931）
+   原则：
+   1. 后端有的字段 → 用真实值渲染；后端没有的 → 保留示例值，不编造
+   2. 连不上后端（file:// 直开 / 服务没启动）→ 全部保持示例数据
+   3. 只读为主；唯一的写操作是 平台启停 + 触发回测（均走后端已有接口）
+   接口：/api/status /api/binance /api/wallet /api/logs /api/config
+        POST /api/platform/start /stop /api/backtest
+   ============================================================ */
+(function(){
+"use strict";
+const LIVE={status:null,bin:null,cfg:null,base:null};
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=n=>(n==null||isNaN(Number(n)))?"—":Number(n).toLocaleString("en-US",{maximumFractionDigits:2});
+const fmt4=n=>(n==null||isNaN(Number(n)))?"—":Number(n).toFixed(4);
+async function jget(u){const r=await fetch(u,{cache:"no-store"});if(!r.ok)throw new Error(r.status);return r.json();}
+async function jpost(u,body){const r=await fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})});if(!r.ok)throw new Error(r.status);return r.json();}
+// 按 h3 前缀找卡片（避免依赖硬编码 DOM 顺序）
+function card(rootSel,titlePrefix){
+  return $$(rootSel+" .card").find(c=>{const h=c.querySelector("h3");return h&&h.textContent.trim().startsWith(titlePrefix);});
+}
+function metricVals(cardEl){return cardEl?Array.from(cardEl.querySelectorAll(":scope > div > .metric .val")):[];}
+function metricHints(cardEl){return cardEl?Array.from(cardEl.querySelectorAll(":scope > div > .metric .hint")):[];}
+function checkRow(cardEl,label){
+  if(!cardEl)return null;
+  return Array.from(cardEl.querySelectorAll(".check")).find(r=>{
+    const s=r.querySelector("span:first-child");return s&&s.textContent.trim()===label;});
+}
+function emptyRow(cols,msg){return `<tr><td colspan="${cols}" style="color:var(--tx3);text-align:center;padding:14px">${esc(msg)}</td></tr>`;}
+
+/* ---------- 顶栏：数据源徽标 + 总权益 ---------- */
+let eqBase=null;
+function renderHeader(){
+  const right=document.querySelector("header .right");
+  if(!right)return;
+  let b=document.getElementById("src-badge");
+  if(!b){
+    b=document.createElement("span");
+    b.id="src-badge";
+    const eq=right.querySelector("span:last-of-type")?Array.from(right.children).find(x=>x.textContent.includes("总权益")):null;
+    right.insertBefore(b,eq||right.lastElementChild);
+    const eqSpan=Array.from(right.children).find(x=>x.textContent.includes("总权益"));
+    if(eqSpan)eqBase=eqSpan;
+  }
+  const s=LIVE.status;
+  if(LIVE.statusOK){
+    b.innerHTML='<i class="status-dot ok"></i>AI-23 后端';
+    const cash=(s&&s.hb&&s.hb.cash)||0;
+    const bal=(LIVE.bin&&LIVE.bin.ok&&LIVE.bin.binance&&LIVE.bin.binance.linked&&LIVE.bin.binance.balance_usdt)||0;
+    if(eqBase){const v=eqBase.querySelector(".num");if(v)v.textContent="$"+fmt(cash+bal);}
+  }else{
+    b.innerHTML='<i class="status-dot bad"></i>示例数据';
+  }
+}
+
+/* ---------- 预测板块（/api/status） ---------- */
+function renderStatus(d){
+  LIVE.status=d;
+  const hb=d.hb||{};
+  const running=!!d.running;
+  const hasHb=!!d.hb;
+  // 资产总览（纸面账本）
+  const ao=card("#p-poly-term","资产总览");
+  const mv=metricVals(ao), mh=metricHints(ao);
+  if(mv[0]){
+    if(hasHb)mv[0].textContent="$"+fmt(hb.cash);
+    else{mv[0].textContent="—";}
+  }
+  if(mh[0])mh[0].textContent=hasHb?"虚拟资金 · paper 账本（history.db 实时）":"引擎未运行 · 无纸面账本数据";
+  if(mv[1]){
+    if(hasHb){
+      const loss=Number(hb.daily_loss)||0;
+      mv[1].textContent=loss>0?"-"+fmt(loss):"+0.00";
+      mv[1].className="val num "+(loss>0?"dn":"up");
+      mv[1].style.fontSize="18px";
+    }else mv[1].textContent="—";
+  }
+  if(mh[1])mh[1].textContent=hasHb?`引擎当日已实现亏损 ${fmt(hb.daily_loss)||0} ｜ 成交 ${hb.trades||0} 笔`:"启动平台后显示当日盈亏";
+  // AI 自动执行卡
+  const ai=card("#p-poly-term","AI 自动执行");
+  if(ai){
+    const tag=ai.querySelector("h3 .sub.tag");
+    if(tag){
+      tag.textContent=running?"引擎运行中 · paper":"引擎停止 · 点击「恢复」启动";
+      tag.className="sub tag "+(running?"tag-green":"tag-gray");
+    }
+    const fr=checkRow(ai,"决策频率");
+    if(fr){const v=fr.querySelector("span:last-child");if(v)v.textContent=(hb.updates_per_s||0)+" 次盘口更新/秒";}
+    const tr=checkRow(ai,"今日 AI 交易");
+    if(tr){const v=tr.querySelector("span:last-child");if(v)v.textContent=(hb.trades||0)+" 笔成交（observe_only 策略）";}
+    const pause=Array.from(ai.querySelectorAll("button")).find(x=>x.textContent.includes("暂停"));
+    const resume=Array.from(ai.querySelectorAll("button")).find(x=>x.textContent.includes("恢复"));
+    const ctl=async(u,label)=>{
+      try{const r=await jpost(u);tag&&(tag.textContent=r.ok?(u.endsWith("/start")?"引擎运行中 · paper":"引擎停止"):"操作失败");
+        tag&&(tag.className="sub tag "+(r.ok&&u.endsWith("/start")?"tag-green":"tag-gray"));}
+      catch(e){tag&&(tag.textContent="操作失败：后端不可达");}
+    };
+    if(pause)pause.onclick=()=>ctl("/api/platform/stop");
+    if(resume)resume.onclick=()=>ctl("/api/platform/start");
+  }
+  // 窗口监视表 ← markets
+  const wt=$("#poly-watch"), ws=$("#poly-watch-sub");
+  if(wt){
+    const ms=(d.markets||[]).slice(0,10);
+    ws&&(ws.textContent=`Gamma 发现 ${(d.markets||[]).length} 市场 · history.db 最新盘口`);
+    if(!ms.length){
+      wt.innerHTML=`<tr><th>市场</th><th style="width:26%">买两边</th><th style="width:26%">卖两边</th><th style="width:20%">状态</th></tr>`
+        +emptyRow(4,"暂无市场数据 —— 引擎跑起来后，这里显示每个市场的最新盘口与双边和");
+    }else{
+      wt.innerHTML=`<tr><th>市场</th><th style="width:26%">买两边</th><th style="width:26%">卖两边</th><th style="width:20%">状态</th></tr>`
+        +ms.map(m=>{
+          const q=String(m.question||m.market_id||"—");
+          const name=q.length>34?q.slice(0,33)+"…":q;
+          const st=m.arb?'<span class="tag tag-red">套利触发</span>':'<span class="tag tag-gray">观察</span>';
+          return `<tr><td title="${esc(m.market_id)}">${esc(name)}</td><td class="num ${m.buy_both!=null&&m.buy_both<=0.99?"up":""}">${fmt4(m.buy_both)}</td><td class="num ${m.sell_both!=null&&m.sell_both>=1.01?"wn":""}">${fmt4(m.sell_both)}</td><td>${st}</td></tr>`;
+        }).join("");
+    }
+  }
+  // 信号面板 ← 真实引擎心跳
+  const sig=card("#p-poly-term","信号面板");
+  if(sig){
+    const rows=Array.from(sig.querySelectorAll(".sig"));
+    const ups=Number(hb.updates_per_s)||0;
+    const set=(el,val,w)=>{if(!el)return;const v=el.querySelector(".sig-h .num"),b=el.querySelector(".bar>i");
+      if(v)v.textContent=val;if(b)b.style.width=Math.max(2,Math.min(100,w))+"%";};
+    set(rows[0],`心跳 ${ups}/s`,ups*2);
+    set(rows[1],`买两边 ${fmt4(hb.best_buy)}`,(Number(hb.best_buy)||0)*100);
+    set(rows[2],`卖两边 ${fmt4(hb.best_sell)}`,(Number(hb.best_sell)||0)*100);
+  }
+  // 预测持仓 ← 纸面账本（observe_only：没有持仓）
+  const pos=card("#p-poly-term","预测持仓");
+  if(pos){
+    const tb=pos.querySelector("table");
+    if(tb){
+      const n=hb.trades||0;
+      tb.innerHTML=`<tr><th style="width:18%">窗口</th><th style="width:10%">腿</th><th style="width:10%">份数</th><th style="width:11%">成本</th><th style="width:11%">现价</th><th style="width:11%">盈亏</th><th style="width:14%">状态</th><th>操作</th></tr>`
+        +(n>0?emptyRow(8,"账本已有 "+n+" 笔成交，持仓明细待 ledger 接口接入"):emptyRow(8,"策略 observe_only · 暂无持仓（引擎产生成交后，这里显示纸面账本持仓）"));
+    }
+  }
+}
+
+/* ---------- 合约板块（/api/binance） ---------- */
+function renderBinance(d){
+  LIVE.bin=d;
+  if(!d)return;
+  const ok=!!d.ok, bn=d.binance||{}, st=d.stream||{};
+  // 主图标题价格
+  const fut=card("#p-fut-term","BTCUSDT 永续");
+  if(fut){
+    const px=fut.querySelector("h3 .sub.num");
+    if(px)px.textContent=d.price!=null?fmt(d.price):(ok?"—":"97,412.5");
+  }
+  // 资产总览（币安账户）
+  const ao=card("#p-fut-term","资产总览");
+  const mv=metricVals(ao), mh=metricHints(ao);
+  if(mv[0]){
+    if(ok&&bn.linked)mv[0].textContent="$"+fmt(bn.balance_usdt);
+    else if(ok)mv[0].textContent="—";
+  }
+  if(mh[0])mh[0].textContent=ok?(bn.linked?`可用 ${fmt(bn.available_usdt)} USDT ｜ 账户缓存 30s`:"币安未链接 · 运行 binance_link.py 配 .env"):"示例数据（后端不可达）";
+  // 持仓表
+  const pos=card("#p-fut-term","合约持仓");
+  if(pos){
+    const tb=pos.querySelector("table");
+    if(tb){
+      if(ok&&bn.linked){
+        const ps=bn.positions||[];
+        tb.innerHTML=`<tr><th style="width:14%">合约</th><th style="width:9%">方向</th><th style="width:9%">数量</th><th style="width:12%">开仓价</th><th style="width:12%">标记价</th><th style="width:9%">杠杆</th><th style="width:12%">强平价</th><th>未实现 / 操作</th></tr>`
+          +(ps.length?ps.map(p=>{
+              const amt=Number(p.positionAmt||0);
+              const dir=amt>0?"多":amt<0?"空":"—";
+              return `<tr><td>${esc(p.symbol||"—")}</td><td style="color:${amt>0?"var(--up)":"var(--dn)"}">${dir}</td><td class="num">${fmt(Math.abs(amt))}</td><td class="num">${fmt(p.entryPrice)}</td><td class="num">${fmt(p.markPrice!=null?p.markPrice:(d.price))}</td><td class="num">${p.leverage||"—"}x</td><td class="num">${p.liquidationPrice!=null?fmt(p.liquidationPrice):"—"}</td><td><span class="num ${Number(p.unRealizedProfit||0)>=0?"up":"dn"}">${Number(p.unRealizedProfit||0)>=0?"+":""}${fmt(p.unRealizedProfit)}</span></td></tr>`;
+            }).join("")
+            :emptyRow(8,"币安账户当前无持仓"));
+      }else if(ok){
+        tb.innerHTML=`<tr><th style="width:14%">合约</th><th style="width:9%">方向</th><th style="width:9%">数量</th><th style="width:12%">开仓价</th><th style="width:12%">标记价</th><th style="width:9%">杠杆</th><th style="width:12%">强平价</th><th>未实现 / 操作</th></tr>`
+          +emptyRow(8,"币安未链接 · 运行 binance_link.py 填 Key 后，这里显示真实持仓");
+      }
+      // 未链接且后端不可达 → 保留示例行
+    }
+  }
+  // 全局连接状态卡
+  const cn=card("#p-keys","连接状态");
+  if(cn){
+    const upd=(label,cls,txt)=>{
+      const r=checkRow(cn,label);if(!r)return;
+      const v=r.querySelector("span:last-child");
+      if(v)v.innerHTML=`<i class="status-dot ${cls}"></i>${esc(txt)}`;
+    };
+    upd("Polymarket CLOB WebSocket",LIVE.statusOK?(LIVE.status.running?"ok":"bad"):"bad",LIVE.statusOK?(LIVE.status.running?"引擎运行中":"引擎停止"):"后端不可达");
+    upd("币安 Futures WebSocket",ok?(st.connected?"ok":"bad"):"bad",ok?(st.connected?"WS 价格流正常":"WS 未启动（binance_link.py --test 检查）"):"后端不可达");
+    upd("币安 REST（限速池）",ok?(d.banned?"bad":"ok"):"bad",ok?(d.banned?"被限流/封禁 · 已停自动刷新":"正常 · 防封模式（无自动重试）"):"后端不可达");
+  }
+}
+
+/* ---------- 钱包（/api/wallet） ---------- */
+function renderWallet(d){
+  const w=d&&d.wallet;if(!w)return;
+  const row=document.querySelector(".wallet-status");
+  if(row){
+    const v=row.querySelector("span:last-child");
+    if(v)v.innerHTML=w.linked
+      ?`<span class="up">已链接 · ${esc(w.wallet_address||"—")}</span>`
+      :`<span class="wn">未链接 · ${esc((w.error||"模拟盘允许不连").slice(0,60))}</span>`;
+  }
+  const kc=card("#p-keys","钱包连接");
+  if(kc&&w.linked){
+    const bal=checkRow(kc,"USDC 余额");
+    if(bal){const v=bal.querySelector("span:last-child");if(v)v.textContent=fmt(w.balance)+" pUSD";}
+    const ord=checkRow(kc,"授权额度");
+    if(ord){const v=ord.querySelector("span:last-child");if(v)v.textContent="挂单 "+(w.open_orders!=null?w.open_orders:"—")+" 笔";v.className="num";}
+  }
+}
+
+/* ---------- 配置（/api/config） ---------- */
+function renderCfg(c){
+  const cfg=c&&c.config;if(!cfg||cfg.error)return;
+  const env=card("#p-keys","环境配置");
+  if(env){
+    const m=checkRow(env,"TRADING_MODE");
+    if(m){const v=m.querySelector("span:last-child");if(v)v.textContent=cfg.mode||"paper";}
+    const l=checkRow(env,"PRED_LIVE / FUT_BTC_LIVE / FUT_TOP_LIVE");
+    if(l){const v=l.querySelector("span:last-child");
+      if(v)v.textContent=`PRED ${cfg.live_trading?"LIVE":"false"} / BINANCE ${cfg.binance&&cfg.binance.live_trading?"LIVE":"false"} / TOP30 false`;}
+    const stg=checkRow(env,"行情来源");
+    if(stg){const v=stg.querySelector("span:last-child");if(v)v.innerHTML='<span class="up">Gamma + CLOB WS · 币安 WS · 无 REST 轮询</span>';}
+  }
+  // 模式切换卡
+  const mc=card("#p-risk","模式切换");
+  if(mc){
+    const tag=mc.querySelector(".tag.tag-amber");
+    if(tag)tag.textContent="当前："+(cfg.mode==="paper"?"模拟盘（config.py · paper）":"实盘");
+  }
+}
+
+/* ---------- 事件日志（/api/logs） ---------- */
+function renderLogs(d){
+  const box=card("#p-log","事件日志");
+  if(!box)return;
+  const wrap=box.querySelector(":scope > div:last-of-type");
+  if(!wrap)return;
+  const lines=(d.lines||[]).slice(-50).reverse();
+  if(!lines.length)return;
+  wrap.innerHTML=lines.map(l=>{
+    const m=String(l).match(/(\d{2}:\d{2}:\d{2})/);
+    const t=m?m[1]:"";
+    const isErr=/error|Error|ERROR|traceback|失败|禁止|限流|banned/i.test(String(l));
+    const isHb=/\[HB\]/.test(String(l));
+    return `<div class="logline"><span class="t">${esc(t)}</span><span class="tag ${isErr?"tag-red":isHb?"tag-gray":"tag-blue"}">${isHb?"HB":isErr?"ERR":"LOG"}</span> ${esc(String(l).slice(0,120))}</div>`;
+  }).join("");
+}
+
+/* ---------- 回测（复盘页触发 /api/backtest） ---------- */
+function wireBacktest(){
+  const c=card("#p-poly-bt","历史数据管理");
+  if(!c||c.querySelector("#bt-run"))return;
+  const div=document.createElement("div");
+  div.style.cssText="margin-top:10px";
+  div.innerHTML=`
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="mini" id="bt-run" style="font-weight:500">跑回测（重放 history.db）</button>
+      <span style="font-size:11px;color:var(--tx3)" id="bt-hint">默认阈值 买≤0.99 / 卖≥1.01 · 样本内外 70/30 切分</span>
+    </div>
+    <pre id="bt-out" style="display:none;margin-top:8px;padding:10px;background:var(--bg2);border-radius:8px;font-size:11px;line-height:1.6;overflow:auto;max-height:260px;font-family:var(--mono);white-space:pre-wrap"></pre>`;
+  c.appendChild(div);
+  div.querySelector("#bt-run").onclick=async()=>{
+    const out=div.querySelector("#bt-out"),hint=div.querySelector("#bt-hint");
+    hint.textContent="回测运行中…（重放盘口快照，最多 300 秒）";
+    out.style.display="block";
+    try{
+      const r=await jpost("/api/backtest",{});
+      if(r.ok){hint.textContent="回测完成";out.textContent=JSON.stringify(r.result,null,2);}
+      else{hint.textContent="回测失败";out.textContent=r.error||"未知错误";}
+    }catch(e){hint.textContent="回测失败";out.textContent="后端不可达："+e;}
+  };
+}
+
+/* ---------- 轮询 ---------- */
+let statusOK=false;
+Object.defineProperty(LIVE,"statusOK",{get:()=>statusOK});
+async function tickStatus(){
+  try{const d=await jget("/api/status");if(d&&d.ok){statusOK=true;renderStatus(d);}}catch(e){statusOK=false;}
+  renderHeader();
+}
+async function tickBinance(){try{renderBinance(await jget("/api/binance"));}catch(e){}}
+async function tickWallet(){try{renderWallet(await jget("/api/wallet"));}catch(e){}}
+async function tickLogs(){try{renderLogs(await jget("/api/logs"));}catch(e){}}
+async function tickCfg(){try{renderCfg(await jget("/api/config"));}catch(e){}}
+
+function start(){
+  wireBacktest();
+  renderHeader();
+  if(location.protocol!=="http:"){return;} // file:// 直开：保持示例数据
+  tickCfg();tickStatus();tickBinance();tickLogs();tickWallet();
+  setInterval(tickStatus,5000);   // 与旧看板同节奏；后端内部自带缓存/限流保护
+  setInterval(tickBinance,5000);  // 服务端 30s 缓存 + 封禁即停，不会打爆币安
+  setInterval(tickLogs,15000);
+  setInterval(tickWallet,60000);  // 后端 link_status 本身 30s 节流
+}
+start();
+})();
+</script>
+</body>
+</html>
