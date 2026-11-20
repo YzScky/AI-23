@@ -486,7 +486,10 @@ button.mini{padding:4px 12px;font-size:12px}
       </div>
     </div>
     <div class="card term-bottom">
-      <h3>纸面模拟 ZZZZM · 平仓流水 <span class="sub" id="paper-sub">实盘行情 · 虚拟成交 · 账本 ~/.zzzm_paper.json</span></h3>
+      <h3>纸面模拟 ZZZZM <span class="sub" id="paper-sub">实盘行情 · 虚拟成交 · 账本 ~/.zzzm_paper.json</span></h3>
+      <h3 style="margin-top:4px">当前虚拟持仓 <span class="sub" id="paper-pos-sub">现价每 15s 估值</span></h3>
+      <table id="paper-positions"></table>
+      <h3 style="margin-top:12px">平仓流水 <span class="sub">最近 30 笔 · 含双边 0.05% 手续费</span></h3>
       <table id="paper-trades"></table>
     </div>
     <div class="card term-bottom">
@@ -1480,6 +1483,12 @@ function renderPaper(d){
   if(sub){
     const ret=(p.equity-p.start)/p.start*100;
     sub.textContent=`权益 $${fmt(p.equity)}（${(ret>=0?"+":"")+ret.toFixed(2)}%）· 已实现 ${p.realized>=0?"+":""}${fmt(p.realized)} · 浮动 ${p.unrealized>=0?"+":""}${fmt(p.unrealized)} · 胜率 ${p.trades_n?p.win_rate+"%":"—"} · ${(p.positions||[]).length} 个虚拟持仓 ｜ 虚拟本金 $${fmt(p.start)}`;
+  }
+  const ps=g("paper-positions");
+  if(ps){
+    const prow=pos=>`<tr><td>${esc(pos.symbol)}</td><td style="color:var(--dn)">多</td><td class="num">${fmt(pos.amt)}</td><td class="num">${fmt(pos.entry)}</td><td class="num">${fmt(pos.mark)}</td><td class="num">${pos.lev}x</td><td class="num ${pos.pnl>=0?"up":"dn"}">${pos.pnl>=0?"+":""}${fmt(pos.pnl)}</td></tr>`;
+    ps.innerHTML=`<tr><th>合约</th><th>方向</th><th>数量</th><th>开仓价</th><th>现价</th><th>杠杆</th><th>浮动盈亏</th></tr>`
+      +((p.positions||[]).map(prow).join("")||`<tr><td colspan="7" style="color:var(--tx3)">当前没有虚拟持仓——策略评分达标后自动开仓</td></tr>`);
   }
   const rows=(p.trades||[]).slice().reverse().map(t=>`<tr><td class="num">${esc(t.ts)}</td><td>${esc(t.symbol)}</td><td class="num">${fmt(t.entry)}</td><td class="num">${fmt(t.exit)}</td><td class="num">${t.lev}x</td><td class="num">${fmt(t.hold_min)}m</td><td class="num ${t.pnl>=0?"up":"dn"}">${t.pnl>=0?"+":""}${fmt(t.pnl)}</td></tr>`).join("");
   g("paper-trades").innerHTML=`<tr><th>平仓时间</th><th>合约</th><th>开仓价</th><th>平仓价</th><th>杠杆</th><th>持仓</th><th>盈亏(含费)</th></tr>`
