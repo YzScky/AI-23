@@ -447,6 +447,17 @@ button.mini{padding:4px 12px;font-size:12px}
         </div>
       </div>
       <div class="card">
+        <h3>纸面模拟 ZZZZM <span class="sub" id="paper-sub">实盘行情 · 虚拟成交 · 账本 ~/.zzzm_paper.json</span></h3>
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px">
+          <div class="metric"><div class="label">虚拟权益</div><div class="val num" id="paper-equity" style="font-size:18px">—</div><div class="hint" id="paper-hint">虚拟本金 $1,000</div></div>
+          <div class="metric"><div class="label">已实现盈亏</div><div class="val num" id="paper-realized" style="font-size:18px">—</div><div class="hint">含双边 0.05% 手续费</div></div>
+          <div class="metric"><div class="label">浮动盈亏</div><div class="val num" id="paper-unreal" style="font-size:18px">—</div><div class="hint" id="paper-npos">0 个虚拟持仓</div></div>
+          <div class="metric"><div class="label">胜率</div><div class="val num" id="paper-win" style="font-size:18px">—</div><div class="hint">按已平仓笔数</div></div>
+          <div class="metric"><div class="label">累计收益</div><div class="val num" id="paper-ret" style="font-size:18px">—</div><div class="hint">相对虚拟本金</div></div>
+        </div>
+        <table id="paper-trades" style="margin-top:10px"></table>
+      </div>
+      <div class="card">
         <h3>AI 自动执行 <span class="sub tag tag-green" style="font-weight:500">运行中 · 模拟</span></h3>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
           <span style="font-size:12px;color:var(--tx2);white-space:nowrap">当前策略</span>
@@ -1474,6 +1485,31 @@ async function tickStatus(){
   renderHeader();
 }
 async function tickBinance(){try{renderBinance(await jget("/api/binance"));}catch(e){}}
+async function tickPaper(){try{renderPaper(await jget("/api/paper"));}catch(e){}}
+function renderPaper(d){
+  const p=d&&d.paper;
+  const g=id=>document.getElementById(id);
+  if(!g("paper-equity"))return;
+  if(!p){g("paper-sub").textContent=(d&&d.note)||"等待策略首次开仓";return;}
+  const cls=v=>v>=0?"up":"dn";
+  const sgn=(v,d2)=>(v>=0?"+":"")+fmt(d2!=null?d2:v);
+  g("paper-equity").textContent="$"+fmt(p.equity);
+  g("paper-equity").className="val num "+cls(p.equity-p.start);
+  g("paper-hint").textContent=`虚拟本金 $${fmt(p.start)} ｜ 现金 $${fmt(p.cash)}`;
+  g("paper-realized").textContent=sgn(p.realized);
+  g("paper-realized").className="val num "+cls(p.realized);
+  g("paper-unreal").textContent=sgn(p.unrealized);
+  g("paper-unreal").className="val num "+cls(p.unrealized);
+  g("paper-npos").textContent=(p.positions||[]).length+" 个虚拟持仓";
+  g("paper-win").textContent=p.trades_n?p.win_rate+"%":"—";
+  g("paper-win").className="val num "+(p.win_rate>=50?"up":"dn");
+  const ret=(p.equity-p.start)/p.start*100;
+  g("paper-ret").textContent=(ret>=0?"+":"")+ret.toFixed(2)+"%";
+  g("paper-ret").className="val num "+cls(ret);
+  const rows=(p.trades||[]).slice().reverse().map(t=>`<tr><td class="num">${esc(t.ts)}</td><td>${esc(t.symbol)}</td><td class="num">${fmt(t.entry)}</td><td class="num">${fmt(t.exit)}</td><td class="num">${t.lev}x</td><td class="num">${fmt(t.hold_min)}m</td><td class="num ${t.pnl>=0?"up":"dn"}">${t.pnl>=0?"+":""}${fmt(t.pnl)}</td></tr>`).join("");
+  g("paper-trades").innerHTML=`<tr><th>平仓时间</th><th>合约</th><th>开仓价</th><th>平仓价</th><th>杠杆</th><th>持仓</th><th>盈亏(含费)</th></tr>`
+    +(rows||`<tr><td colspan="7" style="color:var(--tx3)">还没有平仓记录——虚拟仓开了之后这里出流水</td></tr>`);
+}
 async function tickWallet(){try{renderWallet(await jget("/api/wallet"));}catch(e){}}
 async function tickLogs(){try{renderLogs(await jget("/api/logs"));}catch(e){}}
 async function tickCfg(){try{renderCfg(await jget("/api/config"));}catch(e){}}
@@ -1482,11 +1518,12 @@ function start(){
   wireBacktest();
   renderHeader();
   if(location.protocol!=="http:"){return;} // file:// 直开：保持示例数据
-  tickCfg();tickStatus();tickBinance();tickLogs();tickWallet();
+  tickCfg();tickStatus();tickBinance();tickLogs();tickWallet();tickPaper();
   setInterval(tickStatus,5000);   // 与旧看板同节奏；后端内部自带缓存/限流保护
   setInterval(tickBinance,5000);  // 服务端 30s 缓存 + 封禁即停，不会打爆币安
   setInterval(tickLogs,15000);
   setInterval(tickWallet,60000);  // 后端 link_status 本身 30s 节流
+  setInterval(tickPaper,15000);   // 纸面账本本地文件+现价估值，15s 足够
 }
 start();
 })();

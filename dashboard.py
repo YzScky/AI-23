@@ -460,6 +460,58 @@ def wallet_status():
                 "error": f"钱包状态查询失败：{str(e)[:150]}"}
 
 
+# ---------- ZZZZM 纸面模拟 ----------
+
+def paper_status_data():
+    """GET /api/paper：ZZZZM 纸面账本（~/.zzzm_paper.json，binance_strategy.py 写）。
+    只读文件 + 对未平仓用公开现价估值，不调币安私有接口，绝不抛异常。"""
+    pf = os.path.expanduser("~/.zzzm_paper.json")
+    try:
+        with open(pf, encoding="utf-8") as f:
+            st = json.load(f)
+    except FileNotFoundError:
+        return {"ok": True, "paper": None,
+                "note": "纸面账本还没生成——策略第一次开仓后出现"}
+    except Exception as e:
+        return {"ok": False, "error": f"纸面账本读取失败：{str(e)[:150]}"}
+    positions = []
+    unreal = 0.0
+    margin = 0.0
+    try:
+        from quant_platform.binance_client import public_price
+    except Exception:
+        public_price = None
+    for sym, pp in (st.get("positions") or {}).items():
+        mark = pp.get("entry")
+        if public_price:
+            try:
+                mark = public_price(sym)
+            except Exception:
+                pass
+        amt = float(pp.get("amt") or 0)
+        entry = float(pp.get("entry") or 0)
+        lev = float(pp.get("lev") or 1)
+        pnl = (mark - entry) * amt
+        unreal += pnl
+        margin += abs(amt) * entry / max(lev, 1)
+        positions.append({"symbol": sym, "side": pp.get("side"), "amt": amt,
+                          "entry": entry, "mark": mark, "lev": pp.get("lev"),
+                          "pnl": round(pnl, 4)})
+    trades = st.get("trades") or []
+    realized = round(sum(float(t.get("pnl") or 0) for t in trades), 4)
+    wins = sum(1 for t in trades if float(t.get("pnl") or 0) > 0)
+    cash = float(st.get("cash") or 0)
+    start = 1000.0
+    equity = cash + margin + unreal
+    return {"ok": True, "paper": {
+        "cash": round(cash, 2), "start": start,
+        "equity": round(equity, 2),
+        "realized": realized, "unrealized": round(unreal, 4),
+        "win_rate": round(wins / len(trades) * 100) if trades else 0,
+        "trades_n": len(trades),
+        "positions": positions, "trades": trades[-30:]}}
+
+
 # ---------- 币安合约 ----------
 
 _binance_stream = None       # BinancePriceStream 单例（看板进程内）
@@ -662,6 +714,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(200, {"ok": True, "wallet": wallet_status()})
             elif p == "/api/binance":
                 self._send_json(200, binance_status_data())
+            elif p == "/api/paper":
+                self._send_json(200, paper_status_data())
             else:
                 self._send_json(404, {"ok": False, "error": f"没有这个接口：{p}"})
         except Exception as e:
