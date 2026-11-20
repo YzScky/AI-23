@@ -54,6 +54,7 @@ main{width:100%;padding:16px 24px}
 .bar{height:5px;background:var(--bg3);border-radius:3px;margin-top:8px}
 .bar>i{display:block;height:5px;border-radius:3px}
 .term-grid{display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,1.6fr) minmax(280px,1fr);gap:12px}
+.term-grid>.card:last-child{order:-1}/* AI 自动执行卡固定最左列 */
 .term-bottom{margin-top:12px}
 .tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px}
 button.tag{border:none;cursor:pointer;font-family:inherit}
@@ -458,20 +459,21 @@ button.mini{padding:4px 12px;font-size:12px}
         <table id="paper-trades" style="margin-top:10px"></table>
       </div>
       <div class="card">
-        <h3>AI 自动执行 <span class="sub tag tag-green" style="font-weight:500">运行中 · 模拟</span></h3>
+        <h3>AI 自动执行 <span class="sub tag tag-green" style="font-weight:500">运行中 · 纸面</span></h3>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
           <span style="font-size:12px;color:var(--tx2);white-space:nowrap">当前策略</span>
-          <select style="flex:1"><option>v8 · 5信号共振（运行中）</option><option>v7 · 收敛过滤（待命）</option><option>v6 · 单信号触发（已停用）</option></select>
+          <select style="flex:1"><option selected>ZZZZM · 涨幅榜追涨（运行中 · 纸面）</option><option>观察模式 · 只看不交易</option></select>
         </div>
-        <div class="check"><span>决策频率</span><span class="num">每 1m 窗口评估</span></div>
-        <div class="check"><span>决策模型</span><span class="num">deepseek-reasoner · 240ms</span></div>
-        <div class="check"><span>今日 AI 交易</span><span class="num">6 笔 ｜ 拒单 14 次</span></div>
-        <div class="check"><span>当前信号强度</span><span class="num">2/5 · 不开仓</span></div>
-        <h3 style="margin-top:12px">执行参数 <span class="sub">来自策略模块 · 只读</span></h3>
-        <div class="check"><span>单笔仓位上限</span><span class="num">0.02 BTC</span></div>
-        <div class="check"><span>杠杆上限</span><span class="num">3x</span></div>
-        <div class="check"><span>止损 / 止盈</span><span class="num">-0.15% / +0.60%</span></div>
-        <div class="check"><span>日亏损熔断</span><span class="num">$50 已用</span></div>
+        <div class="check"><span>决策频率</span><span class="num">每轮扫描涨幅榜 Top30</span></div>
+        <div class="check"><span>决策模型</span><span class="num">entry_timing 评分 ≥40 才开仓</span></div>
+        <div class="check"><span>今日 AI 交易</span><span class="num">见下方「纸面模拟 ZZZZM」流水</span></div>
+        <div class="check"><span>当前信号强度</span><span class="num">每轮输出评分表 · 见终端日志</span></div>
+        <h3 style="margin-top:12px">执行参数 <span class="sub">来自 binance_strategy.py · 真实</span></h3>
+        <div class="check"><span>仓位分级</span><span class="num">10x/$90u → 8x/$70u → 5x/$50u</span></div>
+        <div class="check"><span>硬止损 / 移动止损</span><span class="num">-7%/-5% 触发 + 移动 5-6%</span></div>
+        <div class="check"><span>止盈</span><span class="num">analyze_position 评分动态止盈</span></div>
+        <div class="check"><span>手续费</span><span class="num">双边 0.05% · 已计入虚拟账本</span></div>
+        <div class="check"><span>日亏损熔断</span><span class="num">$50（config.binance）</span></div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button style="flex:1;background:var(--wnbg);color:var(--wn);border-color:#e5b96b;font-weight:500">暂停 AI（模拟）</button>
           <button style="flex:1">恢复</button>
@@ -629,47 +631,41 @@ button.mini{padding:4px 12px;font-size:12px}
   </section>
 
   <section class="page" id="p-fut-strat">
-    <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:12px">
       <div class="card" style="border-color:#185fa5">
-        <h3>v8 · 5信号共振 <span class="tag tag-green">运行中</span></h3>
-        <div class="check"><span>信号</span><span class="num">RSI+动量+VWAP+SMA+订单簿</span></div>
-        <div class="check"><span>贝叶斯加权优势门槛</span><span class="num">≥2% 才开仓</span></div>
-        <div class="check"><span>止损 / 止盈</span><span class="num">-0.15% / +0.60%</span></div>
-        <div class="check"><span>近30天（扣费）</span><span class="num up">+3.1% ｜ 胜率 61%</span></div>
-        <button style="width:100%;margin-top:10px;background:var(--bg2)">查看回测详情</button>
+        <h3>ZZZZM · 涨幅榜追涨 <span class="tag tag-green">运行中 · 纸面</span></h3>
+        <div class="check"><span>选币</span><span class="num">币安合约 24h 涨幅榜 Top30（1h+4h 综合排序）</span></div>
+        <div class="check"><span>进场</span><span class="num">entry_timing 评分 ≥40 开多</span></div>
+        <div class="check"><span>仓位分级</span><span class="num">10x/$90u · 8x/$70u · 5x/$50u</span></div>
+        <div class="check"><span>止损</span><span class="num">-7%/5% 硬止损 + 移动止损 5-6%</span></div>
+        <div class="check"><span>止盈</span><span class="num">analyze_position 评分动态止盈</span></div>
+        <div class="check"><span>15 天回测（修复版）</span><span class="num dn">-13.2% ｜ 胜率 23% ｜ PF 0.42</span></div>
+        <div class="check"><span>已知问题</span><span class="num wn">62% 单子死于评分止损 · 出场结构待优化</span></div>
+        <div class="check"><span>当前状态</span><span class="num">PAPER_MODE=1 · 实盘行情虚拟成交 · 账本 ~/.zzzm_paper.json</span></div>
+        <button style="width:100%;margin-top:10px;background:var(--bg2)">查看回测详情（README_ZZZZM.md）</button>
       </div>
       <div class="card">
-        <h3>v7 · 收敛过滤 <span class="tag tag-gray">待命</span></h3>
-        <div class="check"><span>信号</span><span class="num">3信号收敛 + 1m/5m 共向</span></div>
-        <div class="check"><span>仓位</span><span class="num">半仓 · 杠杆上限 2x</span></div>
-        <div class="check"><span>止损 / 止盈</span><span class="num">-0.20% / +0.80%</span></div>
-        <div class="check"><span>近30天（扣费）</span><span class="num up">+1.4% ｜ 胜率 58%</span></div>
-        <button style="width:100%;margin-top:10px">切换到此策略（模拟）</button>
-      </div>
-      <div class="card" style="opacity:.6">
-        <h3>v6 · 单信号触发 <span class="tag tag-red">已停用</span></h3>
-        <div class="check"><span>信号</span><span class="num">任一信号亮即开仓</span></div>
-        <div class="check"><span>停用原因</span><span class="num dn">过拟合 · 11-17 回撤 3.2%</span></div>
-        <div class="check"><span>近30天（扣费）</span><span class="num dn">-4.8% ｜ 胜率 46%</span></div>
-        <button style="width:100%;margin-top:10px" disabled>已停用 · 数据留档</button>
+        <h3>观察模式 · observe_only <span class="tag tag-gray">无交易</span></h3>
+        <div class="check"><span>规则</span><span class="num">只扫描评分、不出信号、不下单</span></div>
+        <div class="check"><span>用途</span><span class="num">新策略上线前的默认兜底 · 观察榜单结构</span></div>
+        <div class="check"><span>状态</span><span class="num">ZZZZM 出问题时的回退选项</span></div>
+        <button style="width:100%;margin-top:10px">切换到此策略（需重启策略进程）</button>
       </div>
     </div>
     <div class="card" style="margin-bottom:12px">
-      <h3>策略对比 <span class="sub">同一 K 线数据集回放 ｜ 全部含手续费与资金费率</span></h3>
+      <h3>回测对比 <span class="sub">ZZZZM 15 天涨幅榜 Top30 数据集 ｜ 含手续费</span></h3>
       <table>
-        <tr><th style="width:16%">策略</th><th style="width:12%">笔数</th><th style="width:12%">胜率</th><th style="width:14%">总盈亏</th><th style="width:14%">最大回撤</th><th style="width:16%">手续费占毛利</th><th>结论</th></tr>
-        <tr><td>v8 共振</td><td class="num">45</td><td class="num up">61%</td><td class="num up">+$78</td><td class="num">1.2%</td><td class="num">18%</td><td style="color:var(--tx3)">94% 机会被拒，只留高置信</td></tr>
-        <tr><td>v7 收敛</td><td class="num">121</td><td class="num">58%</td><td class="num up">+$41</td><td class="num">2.6%</td><td class="num">24%</td><td style="color:var(--tx3)">交易频率高 2.7 倍，毛利被摊薄</td></tr>
-        <tr><td>v6 单信号</td><td class="num">390</td><td class="num dn">46%</td><td class="num dn">-$112</td><td class="num">9.4%</td><td class="num dn">47%</td><td style="color:var(--tx3)">弱信号放大了噪音亏损</td></tr>
+        <tr><th style="width:16%">版本</th><th style="width:12%">笔数</th><th style="width:12%">胜率</th><th style="width:14%">总盈亏</th><th style="width:16%">盈亏比 PF</th><th>结论</th></tr>
+        <tr><td>原版</td><td class="num">—</td><td class="num">23%</td><td class="num dn">-16.6%</td><td class="num">0.36</td><td style="color:var(--tx3)">qty=max(1,…) 仓位 bug 高价币爆仓</td></tr>
+        <tr><td>修复版</td><td class="num">—</td><td class="num">23%</td><td class="num dn">-13.2%</td><td class="num">0.42</td><td style="color:var(--tx3)">仓位修复；出场结构仍坏，纸面观察验证</td></tr>
       </table>
-      <div style="color:var(--tx3);font-size:11px;margin-top:8px">切换策略前强制同数据集回放对比；上线前须模拟盘连续盈利 ≥7 天（风控准入项）。</div>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">选币有效（涨幅榜 Top30 猎场成立），坏在出场：62% 单子被评分止损杀掉。纸面模拟跑出真实流水后再决定是否继续投入。</div>
     </div>
     <div class="card">
       <h3>策略切换记录</h3>
       <table>
-        <tr><th style="width:16%">时间</th><th style="width:20%">变更</th><th>原因</th></tr>
-        <tr><td class="num">11-13 10:00</td><td>v7 → v8</td><td style="color:var(--tx3)">回放对比：回撤 2.6%→1.2%，拒单率 94%，扣费后优势更稳</td></tr>
-        <tr><td class="num">11-08 14:30</td><td>v6 停用</td><td style="color:var(--tx3)">模拟盘 4 日 3 亏，最大单日 -$5.2</td></tr>
+        <tr><th style="width:16%">时间</th><th style="width:24%">变更</th><th>原因</th></tr>
+        <tr><td class="num">11-20</td><td>ZZZZM 上线（纸面）</td><td style="color:var(--tx3)">回测验证选币有效、出场待优化 → 先跑纸面攒真实流水</td></tr>
       </table>
     </div>
   </section>
@@ -736,22 +732,21 @@ button.mini{padding:4px 12px;font-size:12px}
         <div style="color:var(--tx3);font-size:11px;margin-top:8px">点击左栏榜单行切换主视图；深度五档与逐笔成交在「BTC 主力」终端为常驻完整版，本模块为扫描视图（进场前自动切主力终端确认盘口）。</div>
       </div>
       <div class="card">
-        <h3>AI 自动执行 <span class="sub tag tag-green" style="font-weight:500">运行中 · 模拟</span></h3>
+        <h3>AI 自动执行 <span class="sub tag tag-green" style="font-weight:500">运行中 · 纸面</span></h3>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
           <span style="font-size:12px;color:var(--tx2);white-space:nowrap">当前策略</span>
-          <select style="flex:1"><option>R1 · 流动性轮动（运行中）</option><option>R2 · 量价背离（回测中）</option></select>
+          <select style="flex:1"><option selected>ZZZZM · 涨幅榜追涨（运行中 · 纸面）</option><option>观察模式 · 只看不交易</option></select>
         </div>
-        <div class="check"><span>观察范围</span><span class="num">涨幅榜（24h 涨跌幅排序）</span></div>
-        <div class="check"><span>进场门槛</span><span class="num">由策略 R1 决定 · 见策略管理</span></div>
-        <div class="check"><span>决策模型</span><span class="num">deepseek-reasoner · 240ms</span></div>
-        <div class="check"><span>今日轮动</span><span class="num">3 进 2 出 ｜ 拒单 9 次</span></div>
-        <div class="check"><span>并发上限</span><span class="num">最多 2 标的持仓</span></div>
-        <h3 style="margin-top:12px">执行参数 <span class="sub">来自策略模块 · 只读</span></h3>
-        <div class="check"><span>单笔仓位上限</span><span class="num">$200</span></div>
-        <div class="check"><span>杠杆上限</span><span class="num">2x</span></div>
-        <div class="check"><span>止损 / 止盈</span><span class="num">-0.5% / +1.2%</span></div>
-        <div class="check"><span>强制出场</span><span class="num">出榜即平 ｜ 持仓 ≤4h</span></div>
-        <div class="check"><span>日亏损熔断</span><span class="num">$22 / $100 已用</span></div>
+        <div class="check"><span>观察范围</span><span class="num">涨幅榜（24h 涨跌幅排序 · Top30）</span></div>
+        <div class="check"><span>进场门槛</span><span class="num">entry_timing ≥40 · 1h+4h 综合排序</span></div>
+        <div class="check"><span>决策模型</span><span class="num">binance_strategy.py 每轮评分输出</span></div>
+        <div class="check"><span>今日轮动</span><span class="num">见下方「纸面模拟」流水表</span></div>
+        <div class="check"><span>并发上限</span><span class="num">仓位分级滚动 · 10x/8x/5x</span></div>
+        <h3 style="margin-top:12px">执行参数 <span class="sub">来自 binance_strategy.py · 真实</span></h3>
+        <div class="check"><span>仓位分级</span><span class="num">10x/$90u → 8x/$70u → 5x/$50u</span></div>
+        <div class="check"><span>止损 / 止盈</span><span class="num">-7%/5% 硬 + 移动 5-6% + 评分止盈</span></div>
+        <div class="check"><span>强制出场</span><span class="num">评分止损触发即平（回测 62% 单子死于此）</span></div>
+        <div class="check"><span>手续费</span><span class="num">双边 0.05% · 已计入虚拟账本</span></div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button style="flex:1;background:var(--wnbg);color:var(--wn);border-color:#e5b96b;font-weight:500">暂停 AI（模拟）</button>
           <button style="flex:1">恢复</button>
@@ -780,13 +775,13 @@ button.mini{padding:4px 12px;font-size:12px}
         <tr><td class="num">11-19 22:00</td><td>ACTUSDT</td><td><span class="tag tag-red">移出平仓</span></td><td style="color:var(--tx3)">跌出涨幅榜 #5→#34 · 量枯竭 → 市价平 +1.80</td><td>已平</td></tr>
         <tr><td class="num">11-19 15:30</td><td>EVAA</td><td><span class="tag tag-gray">观望</span></td><td style="color:var(--tx3)">涨幅榜 #1（+78.6%）但量 #88、点差 0.6% → 不过策略门槛</td><td>—</td></tr>
       </table>
-      <div style="color:var(--tx3);font-size:11px;margin-top:8px">以上为 <b>策略 R1 的参数</b>（进榜观察 1 根 15m K 线确认、出榜/量枯竭/超 4h 平仓），可在「策略管理 → R1」修改；本页只负责记录每次入选/移出的依据，不做平台层强制。</div>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">以上为 <b>ZZZZM 的参数</b>（entry_timing ≥40 开多、-7%/5% 硬止损 + 移动止损、评分止盈），可在「策略管理 → ZZZZM」查看；本页只负责记录每次入选/移出的依据，不做平台层强制。</div>
     </div>
     <div class="card">
         <h3>榜单数据源与刷新 <span class="sub">只决定「看什么」，不决定「能不能做」</span></h3>
       <div class="check"><span>榜单性质</span><span class="num">涨幅榜 · 24h 涨跌幅排序</span></div>
       <div class="check"><span>量排名作用</span><span class="num">仅作流动性参考（策略门槛使用）</span></div>
-      <div class="check"><span>是否可交易</span><span class="num">由策略 R1 参数判定，页面不拦</span></div>
+      <div class="check"><span>是否可交易</span><span class="num">由 ZZZZM 参数判定，页面不拦</span></div>
       <div class="check"><span>榜单来源</span><span class="num">币安 24h 涨跌幅排行（涨幅榜）</span></div>
       <div class="check"><span>刷新频率</span><span class="num">5min / 次 · 单次权重 ≈5</span></div>
       <div class="check"><span>REST 消耗</span><span class="num">288 次/天 · 占日配额 &lt; 1%</span></div>
@@ -798,32 +793,29 @@ button.mini{padding:4px 12px;font-size:12px}
   <section class="page" id="p-top-strat">
     <div class="grid" style="grid-template-columns:repeat(2,1fr);margin-bottom:12px">
       <div class="card" style="border-color:#7c5cbf">
-        <h3>R1 · 流动性轮动 <span class="tag tag-green">运行中</span></h3>
-        <div class="check"><span>信号</span><span class="num">涨幅榜位次+量能突变+资金费极值+订单簿</span></div>
-        <div class="check"><span>进场门槛（策略参数）</span><span class="num">24h量 ≥$5亿 · OI ≥$1亿 · 榜内 ≤30</span></div>
-        <div class="check"><span>进榜确认</span><span class="num">观察 1 根 15m K 线（防插针）</span></div>
-        <div class="check"><span>周期 / 出场</span><span class="num">≤4h · 出榜即平 · 止损 -0.5%</span></div>
-        <div class="check"><span>并发 / 仓位</span><span class="num">≤2 标的 · 单笔 ≤$200 · 2x</span></div>
-        <div class="check"><span>近30天（扣费）</span><span class="num up">+2.06% ｜ 轮动 27 进 18 出</span></div>
-        <div class="check"><span>手续费占毛利</span><span class="num wn">42%</span></div>
-        <button style="width:100%;margin-top:10px;background:var(--bg2)">查看回测详情</button>
+        <h3>ZZZZM · 涨幅榜追涨 <span class="tag tag-green">运行中 · 纸面</span></h3>
+        <div class="check"><span>选币</span><span class="num">涨幅榜 Top30 · 1h+4h 涨幅综合排序</span></div>
+        <div class="check"><span>进场门槛（策略参数）</span><span class="num">entry_timing ≥40 开多</span></div>
+        <div class="check"><span>仓位分级</span><span class="num">10x/$90u · 8x/$70u · 5x/$50u</span></div>
+        <div class="check"><span>周期 / 出场</span><span class="num">-7%/5% 硬止损 + 移动 5-6% + 评分止盈</span></div>
+        <div class="check"><span>15 天回测（修复版）</span><span class="num dn">-13.2% ｜ 胜率 23% ｜ PF 0.42</span></div>
+        <div class="check"><span>已知问题</span><span class="num wn">62% 单子死于评分止损 · 出场结构待优化</span></div>
+        <button style="width:100%;margin-top:10px;background:var(--bg2)">查看回测详情（README_ZZZZM.md）</button>
       </div>
       <div class="card">
-        <h3>R2 · 量价背离 <span class="tag tag-gray">回测中</span></h3>
-        <div class="check"><span>信号</span><span class="num">价新高但量衰减 / 量增价滞</span></div>
-        <div class="check"><span>定位</span><span class="num">R1 的出场增强 · 非独立开仓</span></div>
-        <div class="check"><span>回放对比</span><span class="num">进行中 · 预计 +0.4% 增量</span></div>
-        <div class="check"><span>上线条件</span><span class="num">回放达标 + 模拟盘 7 天</span></div>
-        <button style="width:100%;margin-top:10px" disabled>回测中 · 暂不可切换</button>
+        <h3>观察模式 · observe_only <span class="tag tag-gray">无交易</span></h3>
+        <div class="check"><span>规则</span><span class="num">只刷榜评分，不出信号、不下单</span></div>
+        <div class="check"><span>用途</span><span class="num">ZZZZM 出问题时的回退兜底</span></div>
+        <button style="width:100%;margin-top:10px">切换到此策略（需重启策略进程）</button>
       </div>
     </div>
     <div class="card">
       <h3>策略切换记录 <span class="sub">谁在什么时候切了什么</span></h3>
       <table>
         <tr><th style="width:16%">时间</th><th style="width:22%">变更</th><th>原因</th></tr>
-        <tr><td class="num">11-08 10:00</td><td>R1 首次上线（模拟）</td><td style="color:var(--tx3)">回放对比通过：轮动 27 进 18 出，手续费占毛利 42% 可接受</td></tr>
+        <tr><td class="num">11-20</td><td>ZZZZM 上线（纸面）</td><td style="color:var(--tx3)">回测选币有效、出场待优化 → 先纸面攒真实流水再评估</td></tr>
       </table>
-      <div style="color:var(--tx3);font-size:11px;margin-top:8px">与 BTC 主力账本完全独立：本模块不交易 BTCUSDT（它归主力账本），避免两边同时吃 BTC 深度互相干扰。</div>
+      <div style="color:var(--tx3);font-size:11px;margin-top:8px">与 BTC 主力账本完全独立：ZZZZM 只做涨幅榜 Top30 的小币，不碰 BTCUSDT（它归主力终端），避免两边同时吃深度互相干扰。</div>
     </div>
   </section>
 
