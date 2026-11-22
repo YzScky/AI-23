@@ -6,6 +6,7 @@
 <title>聚合交易控制台 · 骨架 v2 双板块独立工作区</title>
 <style>
 :root{
+  color-scheme:light;
   --bg:#ffffff; --bg2:#f5f6f8; --bg3:#eef0f3;
   --tx:#1a1d21; --tx2:#5c6470; --tx3:#8a919c;
   --bd:rgba(0,0,0,.12); --bd2:rgba(0,0,0,.22);
@@ -13,13 +14,14 @@
   --dn:#a32d2d; --dnbg:#fcebeb;
   --wn:#854f0b; --wnbg:#faeeda;
   --info:#185fa5; --infobg:#e6f1fb;
+  --pink:#993556; --blue:#185fa5;
   --mono:'SF Mono',Consolas,'Cascadia Code',monospace;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg3);color:var(--tx);font-size:13px}
 button{font:inherit;cursor:pointer;border:0.5px solid var(--bd2);background:transparent;border-radius:8px;padding:6px 12px}
 button:disabled{color:var(--tx2);opacity:1;cursor:default}
-input,select{font:inherit;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd);border-radius:8px;background:var(--bg);outline:none}
+input,select{font:inherit;font-size:12px;padding:6px 10px;border:0.5px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);outline:none}
 input:focus{border-color:var(--info)}
 table{border-collapse:collapse;width:100%;table-layout:fixed}
 th{font-weight:400;color:var(--tx3);text-align:left;padding:6px 8px;font-size:12px}
@@ -84,7 +86,13 @@ footer{color:var(--tx3);font-size:11px;text-align:center;padding:16px}
 button.mini{padding:4px 12px;font-size:12px}
 .gridline{stroke:rgba(0,0,0,.12)}
 [data-theme="dark"] .gridline{stroke:rgba(255,255,255,.28)}
+.line-up{stroke:var(--pink);color:var(--pink)}
+.line-dn{stroke:var(--blue);color:var(--blue)}
+.txt-up{fill:var(--up)}
+[data-theme="dark"] .mod-dot.poly{background:#e07ba0}
+[data-theme="dark"] .mod-dot.g{background:#8fce4d}
 [data-theme="dark"]{
+  color-scheme:dark;
   --bg:#2e343e; --bg2:#3a414d; --bg3:#262b33;
   --tx:#f4f6f8; --tx2:#c9cfd9; --tx3:#9aa5b5;
   --bd:rgba(255,255,255,.16); --bd2:rgba(255,255,255,.30);
@@ -92,6 +100,7 @@ button.mini{padding:4px 12px;font-size:12px}
   --dn:#f6465d; --dnbg:rgba(246,70,93,.20);
   --wn:#f0b90b; --wnbg:rgba(240,185,11,.20);
   --info:#5b9cf6; --infobg:rgba(91,156,246,.22);
+  --pink:#e07ba0; --blue:#7db3f0;
 }
 [data-theme="dark"] .tag-pink{background:rgba(153,53,86,.25);color:#e07ba0}
 [data-theme="dark"] .btn-long{border-color:rgba(246,70,93,.5)}
@@ -139,7 +148,7 @@ button.mini{padding:4px 12px;font-size:12px}
           <div style="display:flex;gap:6px;margin-bottom:4px;font-size:11px"><button class="tag tag-gray" data-eq="eq-poly" data-p="0,46 23,47 46,45 69,48 92,46 115,49 138,44 161,47 184,43 207,45 230,41 253,43 280,40">1日</button><button class="tag tag-blue" data-eq="eq-poly" data-p="0,52 35,50 70,51 105,47 140,48 175,44 210,45 245,41 280,38">7日</button><button class="tag tag-gray" data-eq="eq-poly" data-p="0,56 25,54 50,55 75,52 100,53 125,50 150,51 175,48 200,49 225,45 250,46 280,40">30日</button><button class="tag tag-gray" data-eq="eq-poly" data-p="0,58 30,56 60,57 90,54 120,55 150,51 180,52 210,48 240,49 270,43 280,38">全部</button></div>
           <svg viewBox="0 0 280 64" style="width:100%">
             <line x1="0" y1="56" x2="280" y2="56" class="gridline" stroke-width="0.5"/>
-            <polyline id="eq-poly" points="0,52 35,50 70,51 105,47 140,48 175,44 210,45 245,41 280,38" fill="none" stroke="#993556" stroke-width="1.5"/>
+            <polyline id="eq-poly" class="line-up" points="0,52 35,50 70,51 105,47 140,48 175,44 210,45 245,41 280,38" fill="none" stroke-width="1.5"/>
           </svg>
           <div style="font-size:10px;color:var(--tx3)">权益曲线 · 含未实现盈亏</div>
         </div>
@@ -166,12 +175,12 @@ button.mini{padding:4px 12px;font-size:12px}
         <h3>BTC 5m 窗口 · Up/Down 隐含概率 <span class="sub">窗口 20:20</span></h3>
         <div class="chart-box">
           <svg viewBox="0 0 600 260" style="width:100%;height:100%" preserveAspectRatio="none">
-            <polyline points="0,180 50,172 100,178 150,150 200,158 250,130 300,140 350,112 400,122 450,96 500,106 550,84 600,78" fill="none" stroke="#993556" stroke-width="1.5"/>
-            <polyline points="0,80 50,88 100,82 150,110 200,102 250,130 300,120 350,148 400,138 450,164 500,154 550,176 600,182" fill="none" stroke="#185fa5" stroke-width="1.5"/>
+            <polyline class="line-up" points="0,180 50,172 100,178 150,150 200,158 250,130 300,140 350,112 400,122 450,96 500,106 550,84 600,78" fill="none" stroke-width="1.5"/>
+            <polyline class="line-dn" points="0,80 50,88 100,82 150,110 200,102 250,130 300,120 350,148 400,138 450,164 500,154 550,176 600,182" fill="none" stroke-width="1.5"/>
             <line x1="0" y1="130" x2="600" y2="130" class="gridline" stroke-width="0.5" stroke-dasharray="4 3"/>
             <text x="8" y="125" font-size="11" fill="var(--tx3)">0.50 平价线</text>
           </svg>
-          <div class="axis"><span style="color:#993556">— Up 隐含概率</span> ｜ <span style="color:#185fa5">— Down 隐含概率</span></div>
+          <div class="axis"><span class="line-up">— Up 隐含概率</span> ｜ <span class="line-dn">— Down 隐含概率</span></div>
         </div>
         <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-top:12px">
           <div class="metric"><div class="label">Up 卖价</div><div class="val" style="font-size:16px;font-family:var(--mono)">0.62</div></div>
@@ -263,8 +272,8 @@ button.mini{padding:4px 12px;font-size:12px}
       <h3>预测净值曲线 <span class="sub">含手续费 ｜ 30 天</span></h3>
       <svg viewBox="0 0 900 160" style="width:100%">
         <line x1="0" y1="140" x2="900" y2="140" stroke="rgba(0,0,0,.12)" stroke-width="0.5"/>
-        <polyline points="0,130 80,126 160,120 240,124 320,110 400,104 480,108 560,92 640,86 720,74 800,62 900,48" fill="none" stroke="#993556" stroke-width="1.5"/>
-        <text x="6" y="18" font-size="12" fill="#0f6e56">+$5.2%（扣费后）</text>
+        <polyline class="line-up" points="0,130 80,126 160,120 240,124 320,110 400,104 480,108 560,92 640,86 720,74 800,62 900,48" fill="none" stroke-width="1.5"/>
+        <text x="6" y="18" font-size="12" class="txt-up">+$5.2%（扣费后）</text>
       </svg>
     </div>
 
@@ -376,9 +385,9 @@ button.mini{padding:4px 12px;font-size:12px}
           <h3>分板块限额</h3>
           <div style="display:flex;flex-direction:column;gap:12px">
             <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span><i class="mod-dot poly" style="margin-right:6px"></i>预测 · 日亏损预算</span><span class="num">$86 / $150</span></div><div class="bar"><i style="width:57%;background:#ba7517"></i></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>REST 配额（分钟）</span><span class="num">38 / 1200</span></div><div class="bar"><i style="width:3%;background:#3b6d11"></i></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>REST 配额（分钟）</span><span class="num">38 / 1200</span></div><div class="bar"><i style="width:3%;background:var(--up)"></i></div></div>
             <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>WS 断线次数（24h）</span><span class="num">0 次</span></div><div class="bar"><i style="width:0%"></i></div></div>
-            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>LLM Token 预算（日）</span><span class="num">1.2M / 5M</span></div><div class="bar"><i style="width:24%;background:#639922"></i></div></div>
+            <div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>LLM Token 预算（日）</span><span class="num">1.2M / 5M</span></div><div class="bar"><i style="width:24%;background:var(--up)"></i></div></div>
           </div>
         </div>
       </div>
@@ -845,7 +854,7 @@ function renderStrategyUI(cfg){
         ?"0.30 低吸 × "+(p.size||30)+" 份 → 0.40 落袋 · Q4 剩 "+Math.round((p.exit_q4_clock_s||120)/60)+":00 出场 · 弱队赛前 "+p.underdog_min+"–"+p.underdog_max
         :n==="observe_only"?"只观察盘口，不下任何单":"—";
       const status=n==="scalp_dip"?"未回测":n==="observe_only"?"无交易":"—";
-      return "<div class=\"card\""+(isCur?" style=\"border-color:#993556\"":"")+">"
+      return "<div class=\"card\""+(isCur?" style=\"border-color:var(--pink)\"":"")+">"
         +"<h3>"+esc(n)+" · "+esc(stratLabel(n))+" "+(isCur?"<span class=\"tag tag-green\">运行中</span>":"")+"</h3>"
         +"<div class=\"check\"><span>规则</span><span class=\"num\">"+esc(rules)+"</span></div>"
         +"<div class=\"check\"><span>状态</span><span class=\"num\">"+esc(status)+"</span></div>"
