@@ -215,13 +215,18 @@ def summarize(per_game, target=TARGET, lo=LO, hi=HI, exit_mode=EXIT_MODE, stop=N
          "granularity_mix": dict(Counter(g.get("granularity") for g in per_game)),
          "per_game": per_game,
          "notes": (f"30U/腿，买入价 {lo}-{hi}，买入按市价算 taker 费 0.05；"
-                   f"触 {target} 按挂单卖费 0；Q3 开始市价卖算 taker 费；无止损。"
+                   f"触 {target} 按挂单卖费 0；"
+                   f"{ {'q3_start': 'Q3 开始', 'q3_mid': 'Q3 中段', 'q4_start': 'Q4 开始'}.get(exit_mode, exit_mode) }"
+                   "市价卖算 taker 费；"
+                   f"{'止损 ' + str(stop) + '。' if stop is not None else '无止损。'}"
                    "价格序列单价同时当 bid/ask，成交略高估；5 分钟粒度漏短暂触及，"
                    f"{target} 触及是下限。"
                    f"{sum(1 for g in per_game if g.get('full_24h'))} 场赛前 24h 全覆盖、"
                    f"{sum(1 for g in per_game if not g.get('full_24h'))} 场只有部分"
                    f"（最少 {min(g.get('pregame_coverage_h', 0) for g in per_game):.1f}h），"
-                   "入场腿数是下限。Q3 开始取 plays 第一条 period==3 的时间；"
+                   "入场腿数是下限。"
+                   f"{ {'q3_start': 'Q3 开始', 'q3_mid': 'Q3 中段', 'q4_start': 'Q4 开始'}.get(exit_mode, exit_mode) }"
+                   f"取 plays 第一条 period=={4 if exit_mode == 'q4_start' else 3} 的时间；"
                    "缺失时用 Q4 开始兜底。")}
     return s
 

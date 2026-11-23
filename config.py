@@ -38,6 +38,28 @@ CONFIG = {
             "hi": 0.30,                     # 买入价上限（含）
             "target": 0.40,                 # 落袋价（挂 0.40 卖单，maker，费 0）
             "entry_window_s": 86400,        # 买入窗口：开赛前 24 小时至开球
+            "exit_mode": "q3_start",        # 出场：Q3 开始（period>=3）
+        },
+        # 赛前低吸 A pregame_a（扫荡最好的一版，2026-11-23，180 种组合）：
+        # 买入 0.05-0.30，止盈 0.60，Q4 开始出场；回测 74 场：42 腿，12 落袋，
+        # 胜率 48%，+401.13。集中度警告：前 5 腿占 98%，样本只有 42 腿。
+        "pregame_a": {
+            "size_u": 30.0,
+            "lo": 0.05,
+            "hi": 0.30,
+            "target": 0.60,
+            "entry_window_s": 86400,
+            "exit_mode": "q4_start",        # 出场：Q4 开始（period>=4）
+        },
+        # 赛前低吸 B pregame_b（稳健版）：买入 0.05-0.30，止盈 0.40，Q4 开始出场；
+        # 回测 74 场：42 腿，26 落袋，胜率 67%，+357.31。
+        "pregame_b": {
+            "size_u": 30.0,
+            "lo": 0.05,
+            "hi": 0.30,
+            "target": 0.40,
+            "entry_window_s": 86400,
+            "exit_mode": "q4_start",
         },
     },
     "history": True,      # 历史数据存本地 history.db（SQLite）；run.py --no-history 可关

@@ -149,9 +149,10 @@ def start_platform():
     if pid:
         return {"ok": False, "error": f"平台已在运行（PID {pid}），先停止再启动"}
     py = pick_python()
-    # scalp_dip 一跑就是一晚比赛：8 小时；pregame_2030 买入窗口是开赛前 24 小时，
-    # 一跑就是一整天：24 小时；其他策略保持 1 小时
-    durations = {"scalp_dip": "28800", "pregame_2030": "86400"}
+    # scalp_dip 一跑就是一晚比赛：8 小时；pregame_2030 / pregame_a / pregame_b
+    # 买入窗口是开赛前 24 小时，一跑就是一整天：24 小时；其他策略保持 1 小时
+    durations = {"scalp_dip": "28800", "pregame_2030": "86400",
+                 "pregame_a": "86400", "pregame_b": "86400"}
     duration = durations.get(_current_strategy_name(), "3600")
     # 注意：引擎 _log() 既 print 又写文件。子进程 stdout 丢弃、stderr 进日志文件，
     # 这样 platform.log 里每行只出现一次（print 的那份不再重复进文件），

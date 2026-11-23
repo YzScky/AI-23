@@ -1,5 +1,5 @@
-"""pregame_2030（赛前低吸 0.10-0.30，30U）离线单测：假时钟 + 合成盘口，不碰网络。
-跑：python3 test_pregame2030.py"""
+"""pregame_2030 / pregame_a / pregame_b（赛前低吸，30U）离线单测：
+假时钟 + 合成盘口，不碰网络。跑：python3 test_pregame2030.py"""
 import os
 import sys
 
@@ -7,7 +7,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from quant_platform.ledger import PaperLedger
 from quant_platform.risk import RiskManager
-from quant_platform.strategy import DEFAULT_PREGAME_2030, Pregame2030Strategy
+from quant_platform.strategy import (DEFAULT_PREGAME_2030, Pregame2030Strategy,
+                                      PregameAStrategy, PregameBStrategy)
 
 T0 = 1793000000  # 固定开球时间（epoch 秒），测试里时间全由 ctx["ts"] 给，不用真时间
 Q = "Suns vs. Rockets"
@@ -45,14 +46,23 @@ def final(winner):
             "winner": winner}
 
 
-def make(clock=None, capital=1000.0, daily_loss_cap=100.0):
-    strat = Pregame2030Strategy(params=dict(DEFAULT_PREGAME_2030),
-                                clock=clock if clock is not None else FakeClock(pre_game()))
+def make(clock=None, capital=1000.0, daily_loss_cap=100.0,
+         strategy_cls=Pregame2030Strategy, params=None):
+    p = dict(DEFAULT_PREGAME_2030)
+    if params:
+        p.update(params)
+    strat = strategy_cls(params=p,
+                         clock=clock if clock is not None else FakeClock(pre_game()))
     ledger = PaperLedger(capital)
     risk = RiskManager({"risk": {"total_capital": capital, "max_pair_size": 200.0,
                                  "daily_loss_cap": daily_loss_cap}})
     logs = []
     return strat, ledger, risk, logs
+
+
+# A/B 的参数（与 config.py 的 strategy.pregame_a / pregame_b 一致）
+PARAMS_A = {"lo": 0.05, "hi": 0.30, "target": 0.60, "exit_mode": "q4_start"}
+PARAMS_B = {"lo": 0.05, "hi": 0.30, "target": 0.40, "exit_mode": "q4_start"}
 
 
 def book(strat, ledger, risk, logs, ts, a_bid=None, a_ask=None, b_bid=None,
@@ -262,6 +272,63 @@ def test_non_nba_ignored_and_t0_missing():
          b_ask=0.75, start_ts=None)
     assert len(ledger.legs) == 0, "没有开球时间不能开仓"
     assert has(logs, "开球时间")
+
+
+# ---------- pregame_a / pregame_b（Q4 开始出场）----------
+
+def test_pregame_a_tp_060():
+    strat, ledger, risk, logs = make(strategy_cls=PregameAStrategy, params=PARAMS_A)
+    buy_a_025(strat, ledger, risk, logs)
+    # A：赛中摸到 0.60 落袋：收 120x0.60=72，买入费 1.125，成本 30，盈亏 +40.875
+    strat.clock.snap = in_game(2, 600)
+    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.62, a_ask=0.63, b_bid=0.38, b_ask=0.39)
+    assert len(ledger.legs) == 0
+    assert abs(ledger.cash - 1040.875) < 0.01, f"cash 应为 1040.875，实际 {ledger.cash}"
+    assert abs(ledger.trades[-1]["locked_pnl"] - 40.875) < 0.01
+    assert has(logs, "落袋")
+    assert has(logs, "[PGA]"), "A 的日志标签应为 [PGA]"
+
+
+def test_pregame_a_q3_does_not_exit_q4_does():
+    strat, ledger, risk, logs = make(strategy_cls=PregameAStrategy, params=PARAMS_A)
+    buy_a_025(strat, ledger, risk, logs)
+    # Q3 开始：A 不出场（出场点是 Q4 开始）
+    strat.clock.snap = in_game(3, 720)
+    book(strat, ledger, risk, logs, T0 + 5400, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    assert len(ledger.legs) == 1, "A 在 Q3 不应出场"
+    # Q4 开始：出场，市价 0.05 平掉，盈亏 -25.41
+    strat.clock.snap = in_game(4, 700)
+    book(strat, ledger, risk, logs, T0 + 6600, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    assert len(ledger.legs) == 0
+    assert abs(ledger.trades[-1]["locked_pnl"] + 25.41) < 0.01
+    assert abs(ledger.cash - 974.59) < 0.01, f"cash 应为 974.59，实际 {ledger.cash}"
+    assert has(logs, "Q4 开始")
+
+
+def test_pregame_b_lo_005_entry():
+    # B 下限 0.05：卖价 0.05 买入（600 份）；0.04 不买
+    strat, ledger, risk, logs = make(strategy_cls=PregameBStrategy, params=PARAMS_B)
+    book(strat, ledger, risk, logs, T0 - 3600, a_bid=0.04, a_ask=0.05, b_bid=0.94, b_ask=0.95)
+    assert len(ledger.legs) == 1, "0.05 是 B 的下限（含），应买入"
+    assert abs(list(ledger.legs.values())[0]["size"] - 600.0) < 0.01
+    assert has(logs, "[PGB]"), "B 的日志标签应为 [PGB]"
+    strat, ledger, risk, logs = make(strategy_cls=PregameBStrategy, params=PARAMS_B)
+    book(strat, ledger, risk, logs, T0 - 3600, a_bid=0.03, a_ask=0.04, b_bid=0.95, b_ask=0.96)
+    assert len(ledger.legs) == 0, "0.04 低于 B 的下限，不应买入"
+
+
+def test_pregame_b_q4_start_exit():
+    strat, ledger, risk, logs = make(strategy_cls=PregameBStrategy, params=PARAMS_B)
+    buy_a_025(strat, ledger, risk, logs)
+    # Q3 不出场；Q4 开始市价 0.05 平掉，盈亏 -25.41
+    strat.clock.snap = in_game(3, 100)
+    book(strat, ledger, risk, logs, T0 + 5400, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    assert len(ledger.legs) == 1, "B 在 Q3 不应出场"
+    strat.clock.snap = in_game(4, 720)
+    book(strat, ledger, risk, logs, T0 + 6600, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    assert len(ledger.legs) == 0
+    assert abs(ledger.trades[-1]["locked_pnl"] + 25.41) < 0.01
+    assert has(logs, "Q4 开始")
 
 
 def main():
