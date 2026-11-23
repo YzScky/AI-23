@@ -41,6 +41,8 @@ LO, HI = 0.10, 0.30
 TARGET = 0.40
 FEE_RATE = 0.05
 WINDOW_S = 24 * 3600
+EXIT_MODE = "q3_start"      # 出场模式：q3_start / q3_mid / q4_start
+EXIT_Q3_CLOCK_S = 360       # q3_mid 用：Q3 比赛时钟剩 6:00
 
 
 def _price_at(pts, times, ts):
@@ -54,7 +56,7 @@ def _taker_fee(shares, price):
     return FEE_RATE * shares * price * (1.0 - price)
 
 
-def replay_game(g, target=TARGET, lo=LO, hi=HI):
+def replay_game(g, target=TARGET, lo=LO, hi=HI, exit_mode=EXIT_MODE, stop=None):
     """重放一场。返回 per-game dict（含 0 或 1 腿）。"""
     t0 = g["start_ts"]
     plays = g["plays"] or []
@@ -92,22 +94,31 @@ def replay_game(g, target=TARGET, lo=LO, hi=HI):
     # --- 出场 ---
     held_pts = pa if entry["side"] == "A" else pb
     held_times = [p["t"] for p in held_pts]
-    # 出场时刻：第三节开始（plays 里第一条 period==3 的记录），
-    # 缺失时用 Q4 开始（第一条 period>=4 的记录）兜底
+    # 出场时刻按 exit_mode：
+    #   q3_start：plays 第一条 period==3；q3_mid：第一条 period==3 且 clock<=360；
+    #   q4_start：第一条 period==4。缺失时用 Q4 开始兜底（q4_start 缺失则结算）。
     exit_t, exit_kind = None, None
     for pl in plays:
-        per = pl.get("period")
-        if per == 3:
+        per, cs = pl.get("period"), pl.get("clock_s")
+        if exit_mode == "q3_start" and per == 3:
             exit_t, exit_kind = pl["t"], "Q3_START"
             break
-        if per is not None and per >= 4:
+        if exit_mode == "q3_mid" and per == 3 and cs is not None \
+                and cs <= EXIT_Q3_CLOCK_S:
+            exit_t, exit_kind = pl["t"], "Q3_MID"
+            break
+        if exit_mode == "q4_start" and per == 4:
+            exit_t, exit_kind = pl["t"], "Q4_START"
+            break
+        if per is not None and per >= 4 and exit_mode != "q4_start":
             exit_t, exit_kind = pl["t"], "Q4_START"
             break
     leg = {"side": entry["side"], "entry_price": entry["price"],
            "shares": round(entry["shares"], 2), "entry_t": entry["t"],
            "lead_h": entry["lead_h"], "fee_buy": entry["fee_buy"]}
-    # TP：T0 之后、出场时刻之前第一次 >= target
+    # TP / 止损：T0 之后、出场时刻之前，按时间顺序扫（stop=None = 无止损）
     tp_t = None
+    stop_t, stop_p = None, None
     for p in held_pts:
         if p["t"] < t0:
             continue
@@ -116,10 +127,19 @@ def replay_game(g, target=TARGET, lo=LO, hi=HI):
         if p["p"] >= target:
             tp_t = p["t"]
             break
+        if stop is not None and p["p"] <= stop:
+            stop_t, stop_p = p["t"], p["p"]
+            break
     if tp_t is not None:
         leg.update({"exit": "TP", "exit_price": target, "exit_t": tp_t,
                     "fee_sell": 0.0,
                     "pnl": round(entry["shares"] * target - SIZE_U
+                                 - entry["fee_buy"], 4)})
+    elif stop_t is not None:
+        fee_sell = round(_taker_fee(entry["shares"], stop_p), 4)
+        leg.update({"exit": "STOP", "exit_price": stop_p, "exit_t": stop_t,
+                    "fee_sell": fee_sell,
+                    "pnl": round(entry["shares"] * stop_p - fee_sell - SIZE_U
                                  - entry["fee_buy"], 4)})
     elif exit_t is not None:
         exit_p = _price_at(held_pts, held_times, exit_t)
@@ -158,15 +178,16 @@ def load_all_cached(data_dir):
     return records
 
 
-def summarize(per_game, target=TARGET, lo=LO, hi=HI):
+def summarize(per_game, target=TARGET, lo=LO, hi=HI, exit_mode=EXIT_MODE, stop=None):
     legs = [l for g in per_game for l in g["legs"]]
     tp = [l for l in legs if l["exit"] == "TP"]
-    q3 = [l for l in legs if l["exit"] == "Q3_START"]
+    q3 = [l for l in legs if l["exit"] in ("Q3_START", "Q3_MID")]
     q4 = [l for l in legs if l["exit"] == "Q4_START"]
+    stp = [l for l in legs if l["exit"] == "STOP"]
     stl = [l for l in legs if l["exit"] == "SETTLE"]
     wins = [l for l in legs if l["pnl"] > 0]
     total = round(sum(l["pnl"] for l in legs), 2)
-    s = {"target": target, "lo": lo, "hi": hi,
+    s = {"target": target, "lo": lo, "hi": hi, "exit_mode": exit_mode, "stop": stop,
          "games": len(per_game), "legs": len(legs),
          "games_with_entry": sum(1 for g in per_game if g["legs"]),
          "games_no_entry": sum(1 for g in per_game if not g["legs"]),
@@ -178,6 +199,7 @@ def summarize(per_game, target=TARGET, lo=LO, hi=HI):
          "q3_exit_prices": sorted(l["exit_price"] for l in q3),
          "q4_count": len(q4), "q4_pnl": round(sum(l["pnl"] for l in q4), 2),
          "q4_exit_prices": sorted(l["exit_price"] for l in q4),
+         "stop_count": len(stp), "stop_pnl": round(sum(l["pnl"] for l in stp), 2),
          "settle_count": len(stl), "settle_pnl": round(sum(l["pnl"] for l in stl), 2),
          "win_legs": len(wins),
          "win_rate": round(len(wins) / len(legs), 4) if legs else None,
@@ -205,16 +227,19 @@ def summarize(per_game, target=TARGET, lo=LO, hi=HI):
 
 
 def print_report(s):
-    print(f"\n=== NBA 回测：赛前 {s['lo']}-{s['hi']} 低吸 30U，止盈 {s['target']}（{s['games']} 场）===")
+    exit_label = {"q3_start": "Q3 开始", "q3_mid": "Q3 中段（剩 6:00）",
+                  "q4_start": "Q4 开始"}.get(s.get("exit_mode"), s.get("exit_mode"))
+    print(f"\n=== NBA 回测：赛前 {s['lo']}-{s['hi']} 低吸 30U，止盈 {s['target']}，"
+          f"出场 {exit_label}（{s['games']} 场）===")
     print(f"入场：{s['legs']} 腿（{s['games_with_entry']} 场有入场 / {s['games_no_entry']} 场无入场 "
           f"{s['no_entry_reasons']}）；赛前 24h 全覆盖 {s['full_24h_games']} 场")
     print(f"触 {s['target']} 落袋：{s['tp_count']} 次，{s['tp_pnl']:+.2f}")
-    print(f"Q3 开始市价出：{s['q3_count']} 次，{s['q3_pnl']:+.2f}，"
+    print(f"{exit_label}市价出：{s['q3_count']} 次，{s['q3_pnl']:+.2f}，"
           f"出场价 {s['q3_exit_prices']}")
     if s['q4_count']:
-        print(f"Q4 开始市价出（Q3 开始时钟线缺失兜底）：{s['q4_count']} 次，"
+        print(f"Q4 开始市价出（{exit_label}时钟线缺失兜底）：{s['q4_count']} 次，"
               f"{s['q4_pnl']:+.2f}，出场价 {s['q4_exit_prices']}")
-    print(f"终场结算（无 Q3 开始也无 Q4 时钟线）：{s['settle_count']} 次，{s['settle_pnl']:+.2f}")
+    print(f"终场结算（无出场时钟线）：{s['settle_count']} 次，{s['settle_pnl']:+.2f}")
     print(f"胜率：{s['win_legs']}/{s['legs']} = {s['win_rate']}｜"
           f"总盈亏：{s['total_pnl']:+.2f}｜每场平均：{s['avg_pnl_per_game']:+.2f}｜"
           f"每腿平均：{s['avg_pnl_per_leg']}｜最大单腿赢：{s['max_win_leg']:+.2f}｜"
@@ -233,17 +258,23 @@ def main():
     ap.add_argument("--target", type=float, default=TARGET, help="止盈价（默认 0.40）")
     ap.add_argument("--lo", type=float, default=LO, help="买入价下限（含，默认 0.10）")
     ap.add_argument("--hi", type=float, default=HI, help="买入价上限（含，默认 0.30）")
+    ap.add_argument("--exit", dest="exit_mode", default=EXIT_MODE,
+                    choices=["q3_start", "q3_mid", "q4_start"],
+                    help="出场模式（默认 q3_start）")
     args = ap.parse_args()
     root = os.path.dirname(os.path.abspath(__file__))
     data_dir = args.data_dir if os.path.isabs(args.data_dir) else os.path.join(root, args.data_dir)
     records = load_all_cached(data_dir)
-    print(f"缓存重放：{len(records)} 场（{data_dir}），买入价 {args.lo}-{args.hi}，止盈 {args.target}")
+    print(f"缓存重放：{len(records)} 场（{data_dir}），买入价 {args.lo}-{args.hi}，"
+          f"止盈 {args.target}，出场 {args.exit_mode}")
     if not records:
         print("没有可重放的比赛数据。")
         return 1
-    per_game = [replay_game(g, target=args.target, lo=args.lo, hi=args.hi)
+    per_game = [replay_game(g, target=args.target, lo=args.lo, hi=args.hi,
+                            exit_mode=args.exit_mode)
                 for g in records]
-    s = summarize(per_game, target=args.target, lo=args.lo, hi=args.hi)
+    s = summarize(per_game, target=args.target, lo=args.lo, hi=args.hi,
+                  exit_mode=args.exit_mode)
     print_report(s)
     out_path = args.output if os.path.isabs(args.output) else os.path.join(root, args.output)
     with open(out_path, "w", encoding="utf-8") as f:
