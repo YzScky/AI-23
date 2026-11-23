@@ -319,4 +319,207 @@ class ScalpDipStrategy(Strategy):
         return []
 
 
-STRATEGIES = {"observe_only": ObserveOnlyStrategy, "scalp_dip": ScalpDipStrategy}
+DEFAULT_PREGAME_2030 = {
+    "size_u": 30.0,            # 每腿 30U（份数 = 30 / 买入价）
+    "lo": 0.20,                # 买入价下限（含）
+    "hi": 0.30,                # 买入价上限（含）
+    "target": 0.40,            # 落袋价（挂 0.40 卖单，maker，费 0）
+    "entry_window_s": 86400,   # 买入窗口：T0-24h 至 T0（只在开赛前买）
+}
+
+
+class Pregame2030Strategy(Strategy):
+    """赛前低吸（NBA Polymarket 比赛盘，纸面模式）。
+
+    规则（用户 2026-11-23 确认）：
+    - 每天扫当天所有比赛，只买赛前价格在 [0.20, 0.30]（含）那一边，其他不买。
+    - 买入窗口：开赛前 1 天都可以（T0-24h ~ T0）；窗口内卖价第一次进区间就
+      市价买入 30U（份数 = 30 / 买入价，taker 费 = fee_rate x 份数 x 价 x (1-价)）。
+      每场最多一腿。
+    - 买入后等开赛；盘中第一次触及 0.40 就全部卖出（挂 0.40 卖单，maker，费 0）。
+    - 到第四节开始（ESPN 时钟第一次 period >= 4）还没触及 0.40，就按当时买价
+      市价全部卖出（taker 费）。无止损。
+    - 终场仍有持仓（时钟全程缺失的极端情况）才按胜负结算；买入费计入结算盈亏。
+
+    与 scalp_dip 的区别：只做赛前、不做赛中低吸；买入价是区间不是固定 0.30；
+    份数按 30U 算不是固定 30 份；出场提前到 Q4 开始（不是 Q4 剩 2:00）；
+    没有止损。买入是市价买（taker 费），不是挂单（maker）。
+
+    回测（backtest_nba_v2.py，2026-11-23，67 场）：入场 25 腿，触 0.40 落袋
+    19 次（+294.82），Q4 开始市价出 6 次（-164.80，出场价 0.0015-0.0515），
+    胜率 76%，总盈亏 +130.03，每腿平均 +5.20。42 场赛前价格没进区间所以不买；
+    25 腿里 18 腿是开赛 12 小时前买的——1 天窗口是入场的前提。
+
+    接法与 scalp_dip 一样：策略自管执行，on_book 永远返回 []。
+    时钟走 ESPN（quant_platform/nba_clock.py）；买入那一下要求时钟可达
+    （否则 Q4 出场没法管），时钟缺失时这一下先不买、继续等窗口，
+    不像 scalp_dip 那样直接放弃；持仓后只按价格管理 0.40 落袋。
+    """
+    name = "pregame_2030"
+    tags = ["nba"]
+
+    def __init__(self, params=None, clock=None):
+        super().__init__(params)
+        p = dict(DEFAULT_PREGAME_2030)
+        p.update(self.params)
+        self.p = p
+        self.clock = clock if clock is not None else NbaClock()
+        self.state = {}  # market_id -> 每场状态机
+
+    # ---------- 小工具 ----------
+
+    def _log(self, ctx, msg):
+        log = (ctx or {}).get("log")
+        line = f"[PG2030] {msg}"
+        if callable(log):
+            try:
+                log(line)
+                return
+            except Exception:
+                pass
+        print(line, flush=True)
+
+    def _st(self, market_id):
+        st = self.state.get(market_id)
+        if st is None:
+            st = {"phase": "IDLE", "side": None, "leg_id": None,
+                  "entry_price": None, "shares": None, "fee_buy": 0.0,
+                  "seen": False, "last_clock_log": 0.0}
+            self.state[market_id] = st
+        return st
+
+    def _clock(self, ctx, st, teams, start_ts, now):
+        """取比赛时钟。失败返回 None（调用方按时钟缺失处理，节流记日志）。"""
+        if teams is None or start_ts is None:
+            return None
+        try:
+            snap = self.clock.get_game(teams[0], teams[1], et_date_str(start_ts))
+        except Exception:
+            snap = None
+        if snap is None and now - st["last_clock_log"] >= 300:
+            st["last_clock_log"] = now
+            self._log(ctx, "时钟缺失：ESPN 记分牌拉不到这场比赛，暂不买入")
+        return snap
+
+    # ---------- 主入口 ----------
+
+    def on_book(self, state, ctx):
+        if state.get("tag") != "nba":
+            return []
+        ctx = ctx or {}
+        now = ctx.get("ts") or time.time()
+        mid = state["market_id"]
+        st = self._st(mid)
+        q = state.get("question") or mid
+        p = self.p
+
+        if st["phase"] == "DONE":
+            return []
+
+        # 首次见到这场：记一行，解析两队
+        if not st["seen"]:
+            st["seen"] = True
+            teams = parse_teams(q)
+            st["teams"] = teams
+            start_ts = state.get("start_ts")
+            if teams is None:
+                self._log(ctx, f"{q} question 解析不出两队，跳过这场")
+                st["phase"] = "DONE"
+                return []
+            if start_ts is None:
+                self._log(ctx, f"{q} 没有开球时间（start_ts 缺失），跳过这场")
+                st["phase"] = "DONE"
+                return []
+            t0 = time.strftime("%m-%d %H:%M", time.localtime(start_ts))
+            self._log(ctx, f"{q} 开球 {t0}，等待 T0-24h 内 0.20-0.30 买入 30U")
+        teams = st.get("teams")
+        start_ts = state.get("start_ts")
+        if teams is None or start_ts is None:
+            return []
+
+        # ---- 持仓管理（先于开仓判断）----
+        if st["phase"] == "HOLDING":
+            snap = self._clock(ctx, st, teams, start_ts, now)
+            leg_id, side = st["leg_id"], st["side"]
+            fee_buy, shares = st["fee_buy"], st["shares"]
+            fee_rate = state.get("fee_rate") or 0.05
+            bid = state.get("a_bid") if side == "a" else state.get("b_bid")
+            # 终场：按胜负结算（买入费计入）
+            if snap is not None and snap["state"] == "final":
+                won = snap.get("winner") == (teams[0] if side == "a" else teams[1])
+                pnl = ctx["ledger"].close_leg(leg_id, 1.0 if won else 0.0,
+                                              fee_buy, ts=now)
+                self._log(ctx, f"{q} 终场结算：{'A' if side == 'a' else 'B'}队"
+                               f"{'赢' if won else '输'}，盈亏 {pnl:+.2f}")
+                st["phase"] = "DONE"
+                return []
+            # 0.40 落袋（maker，费 0；买入费已计）
+            if bid is not None and bid >= p["target"]:
+                pnl = ctx["ledger"].close_leg(leg_id, p["target"], fee_buy, ts=now)
+                self._log(ctx, f"{q} 触及 0.40 落袋：{'A' if side == 'a' else 'B'}队 "
+                               f"{st['entry_price']:.2f} 买入 0.40 卖出，盈亏 {pnl:+.2f}")
+                st["phase"] = "DONE"
+                return []
+            # Q4 开始：市价平掉（taker 费 + 买入费）
+            if snap is not None and snap["state"] == "in" \
+                    and snap["period"] is not None and snap["period"] >= 4:
+                if bid is None:
+                    self._log(ctx, f"{q} Q4 开始该出场但无买价，"
+                                   "等下一 tick（终场结算兜底）")
+                    return []
+                fee_sell = fee_rate * shares * bid * (1 - bid)
+                pnl = ctx["ledger"].close_leg(leg_id, bid, fee_sell + fee_buy,
+                                              ts=now)
+                self._log(ctx, f"{q} Q4 开始未到 0.40，市价 {bid:.2f} 平掉"
+                               f"（taker 费 {fee_sell:.2f} + 买入费 {fee_buy:.2f}），"
+                               f"盈亏 {pnl:+.2f}")
+                st["phase"] = "DONE"
+                return []
+            return []
+
+        # ---- 开仓（只在赛前窗口 [T0-24h, T0) 内）----
+        if now < start_ts - p["entry_window_s"]:
+            return []  # 还没到买入窗口
+        if now >= start_ts:
+            self._log(ctx, f"{q} 已过赛前窗口，未成交，不做这场")
+            st["phase"] = "DONE"
+            return []
+        # 窗口内：时钟可达才买（否则 Q4 出场没法管）；缺失就等下一 tick，不放弃
+        if self._clock(ctx, st, teams, start_ts, now) is None:
+            return []
+        a_ask, b_ask = state.get("a_ask"), state.get("b_ask")
+        if a_ask is None or b_ask is None:
+            return []
+        side, ask, both = None, None, False
+        if p["lo"] <= a_ask <= p["hi"]:
+            side, ask = "a", a_ask
+            both = p["lo"] <= b_ask <= p["hi"]
+        elif p["lo"] <= b_ask <= p["hi"]:
+            side, ask = "b", b_ask
+        if side is None:
+            return []  # 价格不在区间，继续等
+        fee_rate = state.get("fee_rate") or 0.05
+        shares = p["size_u"] / ask
+        fee_buy = fee_rate * shares * ask * (1 - ask)
+        ledger = ctx["ledger"]
+        ok, reason = ctx["risk"].check(ledger, p["size_u"])
+        if not ok:
+            self._log(ctx, f"{q} 熔断拒单（赛前买入）：{reason}")
+            st["phase"] = "DONE"
+            return []
+        leg_id = ledger.open_leg(mid, side, ask, shares, ts=now)
+        st["phase"] = "HOLDING"
+        st["side"] = side
+        st["leg_id"] = leg_id
+        st["entry_price"] = ask
+        st["shares"] = shares
+        st["fee_buy"] = fee_buy
+        self._log(ctx, f"{q} 赛前买入：{'A' if side == 'a' else 'B'}队 "
+                       f"{ask:.2f}x{shares:.1f} 份（30U，taker 费 {fee_buy:.2f}）"
+                       f"{'（两边都在区间，先买 A）' if both else ''}，"
+                       "等开赛，触 0.40 落袋，否则 Q4 开始市价出")
+        return []
+
+
+STRATEGIES = {"observe_only": ObserveOnlyStrategy, "scalp_dip": ScalpDipStrategy,
+              "pregame_2030": Pregame2030Strategy}

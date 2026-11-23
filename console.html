@@ -787,12 +787,15 @@ function renderCfg(c){
 /* ---------- 策略管理（/api/config -> 预测区） ---------- */
 /* 策略名和参数一律来自后端（STRATEGIES 注册表 + /api/config），前端不写死。 */
 function stratLabel(name){
-  return name==="scalp_dip"?"篮球低吸 · NBA":name==="observe_only"?"观察 · 只看不交易":name;
+  return name==="scalp_dip"?"篮球低吸 · NBA":name==="pregame_2030"?"赛前低吸 · 0.20–0.30":name==="observe_only"?"观察 · 只看不交易":name;
 }
 function stratRulesText(cfg){
   const p=cfg.strategy_params||{};
   if(cfg.strategy_name==="scalp_dip"){
     return "0.30 低吸 × "+(p.size||30)+" 份 → 0.40 落袋 · Q4 剩 "+Math.round((p.exit_q4_clock_s||120)/60)+":00 出场";
+  }
+  if(cfg.strategy_name==="pregame_2030"){
+    return "赛前 "+(p.lo||0.20)+"–"+(p.hi||0.30)+" 低吸 "+(p.size_u||30)+"U → 0.40 落袋 · Q4 开始市价出";
   }
   if(cfg.strategy_name==="observe_only")return "只观察 · 不下单";
   return "—";
@@ -807,6 +810,16 @@ function stratParamRows(cfg){
       ["赛中开仓截止","Q4 比赛时钟剩 "+Math.round((p.entry_cutoff_q4_clock_s||300)/60)+":00"],
       ["出场","Q4 比赛时钟剩 "+Math.round((p.exit_q4_clock_s||120)/60)+":00 市价平掉"],
       ["比赛筛选",p.game_filter?("弱队赛前价 "+p.underdog_min+"–"+p.underdog_max):"已关闭"],
+      ["日亏损熔断","上限 $"+cap],
+    ];
+  }
+  if(cfg.strategy_name==="pregame_2030"){
+    return [
+      ["买入价",(p.lo||0.20)+"–"+(p.hi||0.30)+"（含），"+(p.size_u||30)+"U/腿"],
+      ["落袋目标","0.40（maker，手续费 0）"],
+      ["买入窗口","开赛前 24 小时"],
+      ["出场","Q4 开始市价平掉"],
+      ["止损","无"],
       ["日亏损熔断","上限 $"+cap],
     ];
   }
@@ -849,11 +862,13 @@ function renderStrategyUI(cfg){
   if(box){
     box.innerHTML=names.map(n=>{
       const isCur=n===cur;
-      const p=cfg.strategy_params||{};
+      const p=((cfg.strategy_params_by_name||{})[n])||{};
       const rules=n==="scalp_dip"
         ?"0.30 低吸 × "+(p.size||30)+" 份 → 0.40 落袋 · Q4 剩 "+Math.round((p.exit_q4_clock_s||120)/60)+":00 出场 · 弱队赛前 "+p.underdog_min+"–"+p.underdog_max
+        :n==="pregame_2030"
+        ?"赛前 "+(p.lo||0.20)+"–"+(p.hi||0.30)+" 低吸 "+(p.size_u||30)+"U → 0.40 落袋 · Q4 开始市价出 · 无止损"
         :n==="observe_only"?"只观察盘口，不下任何单":"—";
-      const status=n==="scalp_dip"?"未回测":n==="observe_only"?"无交易":"—";
+      const status=n==="scalp_dip"?"已回测 −6.85（67场）":n==="pregame_2030"?"已回测 +130.03（67场）":n==="observe_only"?"无交易":"—";
       return "<div class=\"card\""+(isCur?" style=\"border-color:var(--pink)\"":"")+">"
         +"<h3>"+esc(n)+" · "+esc(stratLabel(n))+" "+(isCur?"<span class=\"tag tag-green\">运行中</span>":"")+"</h3>"
         +"<div class=\"check\"><span>规则</span><span class=\"num\">"+esc(rules)+"</span></div>"
@@ -869,7 +884,7 @@ function renderStrategyUI(cfg){
   const tb=$("#strat-compare-body");
   if(tb){
     tb.innerHTML=names.map(n=>{
-      const concl=n==="observe_only"?"只观察，不交易":n==="scalp_dip"?"未回测 —— 上线前先做回测验证":"—";
+      const concl=n==="observe_only"?"只观察，不交易":n==="scalp_dip"?"已回测 67 场 −6.85，31 腿":n==="pregame_2030"?"已回测 67 场 +130.03，25 腿胜率 76%":"—";
       return "<tr><td>"+esc(n)+"</td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td class=\"num\">—</td><td style=\"color:var(--tx3)\">"+esc(concl)+"</td></tr>";
     }).join("");
   }

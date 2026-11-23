@@ -1,0 +1,1331 @@
+{
+  "games": 67,
+  "legs": 25,
+  "games_with_entry": 25,
+  "games_no_entry": 42,
+  "no_entry_reasons": {
+    "no_point_in_range": 42
+  },
+  "full_24h_games": 39,
+  "tp_count": 19,
+  "tp_pnl": 294.82,
+  "q4_count": 6,
+  "q4_pnl": -164.8,
+  "q4_exit_prices": [
+    0.0015,
+    0.0235,
+    0.029,
+    0.035,
+    0.045,
+    0.0515
+  ],
+  "settle_count": 0,
+  "settle_pnl": 0,
+  "win_legs": 19,
+  "win_rate": 0.76,
+  "total_pnl": 130.03,
+  "avg_pnl_per_game": 1.94,
+  "avg_pnl_per_leg": 5.2,
+  "max_win_leg": 27.34,
+  "max_loss_leg": -30.98,
+  "entry_prices": [
+    0.205,
+    0.205,
+    0.205,
+    0.205,
+    0.205,
+    0.215,
+    0.22,
+    0.225,
+    0.245,
+    0.255,
+    0.255,
+    0.255,
+    0.265,
+    0.265,
+    0.275,
+    0.275,
+    0.285,
+    0.285,
+    0.285,
+    0.285,
+    0.295,
+    0.295,
+    0.295,
+    0.295,
+    0.295
+  ],
+  "entry_lead_h": [
+    0.24,
+    1.66,
+    1.93,
+    10.41,
+    10.41,
+    11.41,
+    11.51,
+    13.91,
+    17.58,
+    17.58,
+    20.16,
+    20.58,
+    20.66,
+    21.5,
+    23.99,
+    23.99,
+    23.99,
+    23.99,
+    23.99,
+    23.99,
+    23.99,
+    24.0,
+    24.0,
+    24.0,
+    24.0
+  ],
+  "total_fee_buy": 27.91,
+  "total_fee_sell": 1.11,
+  "granularity_mix": {
+    "1w/5": 48,
+    "1d/1": 19
+  },
+  "per_game": [
+    {
+      "game": "20261113 MIL-ORL",
+      "title": "Bucks vs. Magic",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.225,
+          "shares": 133.33,
+          "entry_t": 1794576919,
+          "lead_h": 10.41,
+          "fee_buy": 1.1625,
+          "exit": "Q4_START",
+          "exit_price": 0.0515,
+          "exit_t": 1794621140,
+          "fee_sell": 0.3257,
+          "pnl": -24.6215
+        }
+      ],
+      "pnl": -24.6215,
+      "entry": {
+        "t": 1794576919,
+        "side": "A",
+        "price": 0.225,
+        "shares": 133.33333333333334,
+        "lead_h": 10.41,
+        "fee_buy": 1.1625
+      },
+      "pregame_coverage_h": 10.4,
+      "full_24h": false
+    },
+    {
+      "game": "20261113 NYK-IND",
+      "title": "Knicks vs. Pacers",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.265,
+          "shares": 113.21,
+          "entry_t": 1794576918,
+          "lead_h": 10.41,
+          "fee_buy": 1.1025,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794618053,
+          "fee_sell": 0.0,
+          "pnl": 14.1805
+        }
+      ],
+      "pnl": 14.1805,
+      "entry": {
+        "t": 1794576918,
+        "side": "B",
+        "price": 0.265,
+        "shares": 113.20754716981132,
+        "lead_h": 10.41,
+        "fee_buy": 1.1025
+      },
+      "pregame_coverage_h": 10.4,
+      "full_24h": false
+    },
+    {
+      "game": "20261113 ATL-CHI",
+      "title": "Hawks vs. Bulls",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.285,
+          "shares": 105.26,
+          "entry_t": 1794576918,
+          "lead_h": 11.41,
+          "fee_buy": 1.0725,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794619236,
+          "fee_sell": 0.0,
+          "pnl": 11.0328
+        }
+      ],
+      "pnl": 11.0328,
+      "entry": {
+        "t": 1794576918,
+        "side": "B",
+        "price": 0.285,
+        "shares": 105.26315789473685,
+        "lead_h": 11.41,
+        "fee_buy": 1.0725
+      },
+      "pregame_coverage_h": 11.4,
+      "full_24h": false
+    },
+    {
+      "game": "20261113 CLE-MIA",
+      "title": "Cavaliers vs. Heat",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 11.4,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261113 MEM-NOP",
+      "title": "Grizzlies vs. Pelicans",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 11.4,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261113 UTA-HOU",
+      "title": "Jazz vs. Rockets",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 11.9,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261113 GSW-SAS",
+      "title": "Warriors vs. Spurs",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 12.9,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261113 POR-SAC",
+      "title": "Trail Blazers vs. Kings",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.205,
+          "shares": 146.34,
+          "entry_t": 1794624325,
+          "lead_h": 0.24,
+          "fee_buy": 1.1925,
+          "exit": "Q4_START",
+          "exit_price": 0.035,
+          "exit_t": 1794632301,
+          "fee_sell": 0.2471,
+          "pnl": -26.3176
+        }
+      ],
+      "pnl": -26.3176,
+      "entry": {
+        "t": 1794624325,
+        "side": "B",
+        "price": 0.205,
+        "shares": 146.34146341463415,
+        "lead_h": 0.24,
+        "fee_buy": 1.1925
+      },
+      "pregame_coverage_h": 13.4,
+      "full_24h": false
+    },
+    {
+      "game": "20261113 OKC-LAC",
+      "title": "Thunder vs. Clippers",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.275,
+          "shares": 109.09,
+          "entry_t": 1794576919,
+          "lead_h": 13.91,
+          "fee_buy": 1.0875,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794630020,
+          "fee_sell": 0.0,
+          "pnl": 12.5489
+        }
+      ],
+      "pnl": 12.5489,
+      "entry": {
+        "t": 1794576919,
+        "side": "B",
+        "price": 0.275,
+        "shares": 109.09090909090908,
+        "lead_h": 13.91,
+        "fee_buy": 1.0875
+      },
+      "pregame_coverage_h": 13.9,
+      "full_24h": false
+    },
+    {
+      "game": "20261114 DEN-NOP",
+      "title": "Nuggets vs. Pelicans",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 34.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261114 DAL-CLE",
+      "title": "Mavericks vs. Cavaliers",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.245,
+          "shares": 122.45,
+          "entry_t": 1794696624,
+          "lead_h": 1.66,
+          "fee_buy": 1.1325,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794706224,
+          "fee_sell": 0.0,
+          "pnl": 17.8471
+        }
+      ],
+      "pnl": 17.8471,
+      "entry": {
+        "t": 1794696624,
+        "side": "B",
+        "price": 0.245,
+        "shares": 122.44897959183673,
+        "lead_h": 1.66,
+        "fee_buy": 1.1325
+      },
+      "pregame_coverage_h": 34.9,
+      "full_24h": true
+    },
+    {
+      "game": "20261114 BKN-MEM",
+      "title": "Nets vs. Grizzlies",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 35.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261114 CHI-MIN",
+      "title": "Bulls vs. Timberwolves",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 35.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261114 DET-MIA",
+      "title": "Pistons vs. Heat",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 35.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261115 IND-PHI",
+      "title": "Pacers vs. 76ers",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.205,
+          "shares": 146.34,
+          "entry_t": 1794679225,
+          "lead_h": 23.99,
+          "fee_buy": 1.1925,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794767711,
+          "fee_sell": 0.0,
+          "pnl": 27.3441
+        }
+      ],
+      "pnl": 27.3441,
+      "entry": {
+        "t": 1794679225,
+        "side": "A",
+        "price": 0.205,
+        "shares": 146.34146341463415,
+        "lead_h": 23.99,
+        "fee_buy": 1.1925
+      },
+      "pregame_coverage_h": 52.4,
+      "full_24h": true
+    },
+    {
+      "game": "20261115 LAL-PHX",
+      "title": "Lakers vs. Suns",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 55.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261115 CHA-LAC",
+      "title": "Hornets vs. Clippers",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 55.9,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261115 SAS-UTA",
+      "title": "Spurs vs. Jazz",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 56.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261115 DAL-BOS",
+      "title": "Mavericks vs. Celtics",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 57.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261115 NYK-TOR",
+      "title": "Knicks vs. Raptors",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 57.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261115 HOU-WAS",
+      "title": "Rockets vs. Wizards",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.205,
+          "shares": 146.34,
+          "entry_t": 1794709813,
+          "lead_h": 21.5,
+          "fee_buy": 1.1925,
+          "exit": "Q4_START",
+          "exit_price": 0.0015,
+          "exit_t": 1794794581,
+          "fee_sell": 0.011,
+          "pnl": -30.984
+        }
+      ],
+      "pnl": -30.984,
+      "entry": {
+        "t": 1794709813,
+        "side": "B",
+        "price": 0.205,
+        "shares": 146.34146341463415,
+        "lead_h": 21.5,
+        "fee_buy": 1.1925
+      },
+      "pregame_coverage_h": 58.4,
+      "full_24h": true
+    },
+    {
+      "game": "20261115 ATL-MIL",
+      "title": "Hawks vs. Bucks",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.255,
+          "shares": 117.65,
+          "entry_t": 1794704433,
+          "lead_h": 23.99,
+          "fee_buy": 1.1175,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794792633,
+          "fee_sell": 0.0,
+          "pnl": 15.9413
+        }
+      ],
+      "pnl": 15.9413,
+      "entry": {
+        "t": 1794704433,
+        "side": "B",
+        "price": 0.255,
+        "shares": 117.6470588235294,
+        "lead_h": 23.99,
+        "fee_buy": 1.1175
+      },
+      "pregame_coverage_h": 59.4,
+      "full_24h": true
+    },
+    {
+      "game": "20261115 OKC-SAC",
+      "title": "Thunder vs. Kings",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.205,
+          "shares": 146.34,
+          "entry_t": 1794708041,
+          "lead_h": 23.99,
+          "fee_buy": 1.1925,
+          "exit": "Q4_START",
+          "exit_price": 0.0235,
+          "exit_t": 1794801093,
+          "fee_sell": 0.1679,
+          "pnl": -27.9214
+        }
+      ],
+      "pnl": -27.9214,
+      "entry": {
+        "t": 1794708041,
+        "side": "B",
+        "price": 0.205,
+        "shares": 146.34146341463415,
+        "lead_h": 23.99,
+        "fee_buy": 1.1925
+      },
+      "pregame_coverage_h": 60.4,
+      "full_24h": true
+    },
+    {
+      "game": "20261116 CHI-CLE",
+      "title": "Bulls vs. Cavaliers",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.255,
+          "shares": 117.65,
+          "entry_t": 1794787223,
+          "lead_h": 23.99,
+          "fee_buy": 1.1175,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794876031,
+          "fee_sell": 0.0,
+          "pnl": 15.9413
+        }
+      ],
+      "pnl": 15.9413,
+      "entry": {
+        "t": 1794787223,
+        "side": "A",
+        "price": 0.255,
+        "shares": 117.6470588235294,
+        "lead_h": 23.99,
+        "fee_buy": 1.1175
+      },
+      "pregame_coverage_h": 82.4,
+      "full_24h": true
+    },
+    {
+      "game": "20261116 MEM-WAS",
+      "title": "Grizzlies vs. Wizards",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 82.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261116 ORL-BOS",
+      "title": "Magic vs. Celtics",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.275,
+          "shares": 109.09,
+          "entry_t": 1794787228,
+          "lead_h": 23.99,
+          "fee_buy": 1.0875,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794877542,
+          "fee_sell": 0.0,
+          "pnl": 12.5489
+        }
+      ],
+      "pnl": 12.5489,
+      "entry": {
+        "t": 1794787228,
+        "side": "A",
+        "price": 0.275,
+        "shares": 109.09090909090908,
+        "lead_h": 23.99,
+        "fee_buy": 1.0875
+      },
+      "pregame_coverage_h": 82.4,
+      "full_24h": true
+    },
+    {
+      "game": "20261116 HOU-MIA",
+      "title": "Rockets vs. Heat",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 82.9,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261116 PHI-BKN",
+      "title": "76ers vs. Nets",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 82.9,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261116 GSW-NOP",
+      "title": "Warriors vs. Pelicans",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 83.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261116 POR-MIN",
+      "title": "Trail Blazers vs. Timberwolves",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 83.4,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261116 PHX-DEN",
+      "title": "Suns vs. Nuggets",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.22,
+          "shares": 136.36,
+          "entry_t": 1794794416,
+          "lead_h": 24.0,
+          "fee_buy": 1.17,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794886816,
+          "fee_sell": 0.0,
+          "pnl": 23.3755
+        }
+      ],
+      "pnl": 23.3755,
+      "entry": {
+        "t": 1794794416,
+        "side": "A",
+        "price": 0.22,
+        "shares": 136.36363636363637,
+        "lead_h": 24.0,
+        "fee_buy": 1.17
+      },
+      "pregame_coverage_h": 84.4,
+      "full_24h": true
+    },
+    {
+      "game": "20261117 NYK-TOR",
+      "title": "Knicks vs. Raptors",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 107.0,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261117 DET-SAS",
+      "title": "Pistons vs. Spurs",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.265,
+          "shares": 113.21,
+          "entry_t": 1794877217,
+          "lead_h": 24.0,
+          "fee_buy": 1.1025,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794970218,
+          "fee_sell": 0.0,
+          "pnl": 14.1805
+        }
+      ],
+      "pnl": 14.1805,
+      "entry": {
+        "t": 1794877217,
+        "side": "A",
+        "price": 0.265,
+        "shares": 113.20754716981132,
+        "lead_h": 24.0,
+        "fee_buy": 1.1025
+      },
+      "pregame_coverage_h": 107.5,
+      "full_24h": true
+    },
+    {
+      "game": "20261117 POR-MIN",
+      "title": "Trail Blazers vs. Timberwolves",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 107.5,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261117 UTA-LAC",
+      "title": "Jazz vs. Clippers",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 109.9,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261117 CHA-LAL",
+      "title": "Hornets vs. Lakers",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.255,
+          "shares": 117.65,
+          "entry_t": 1794888014,
+          "lead_h": 24.0,
+          "fee_buy": 1.1175,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1794977110,
+          "fee_sell": 0.0,
+          "pnl": 15.9413
+        }
+      ],
+      "pnl": 15.9413,
+      "entry": {
+        "t": 1794888014,
+        "side": "A",
+        "price": 0.255,
+        "shares": 117.6470588235294,
+        "lead_h": 24.0,
+        "fee_buy": 1.1175
+      },
+      "pregame_coverage_h": 110.4,
+      "full_24h": true
+    },
+    {
+      "game": "20261118 HOU-IND",
+      "title": "Rockets vs. Pacers",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.295,
+          "shares": 101.69,
+          "entry_t": 1794960022,
+          "lead_h": 23.99,
+          "fee_buy": 1.0575,
+          "exit": "Q4_START",
+          "exit_price": 0.045,
+          "exit_t": 1795053292,
+          "fee_sell": 0.2185,
+          "pnl": -26.6997
+        }
+      ],
+      "pnl": -26.6997,
+      "entry": {
+        "t": 1794960022,
+        "side": "B",
+        "price": 0.295,
+        "shares": 101.69491525423729,
+        "lead_h": 23.99,
+        "fee_buy": 1.0575
+      },
+      "pregame_coverage_h": 130.5,
+      "full_24h": true
+    },
+    {
+      "game": "20261118 MEM-CLE",
+      "title": "Grizzlies vs. Cavaliers",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 130.5,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261118 MIL-MIA",
+      "title": "Bucks vs. Heat",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 130.5,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261118 PHI-ORL",
+      "title": "76ers vs. Magic",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 130.5,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261118 CHI-BKN",
+      "title": "Bulls vs. Nets",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 131.0,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261118 WAS-TOR",
+      "title": "Wizards vs. Raptors",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.295,
+          "shares": 101.69,
+          "entry_t": 1794973809,
+          "lead_h": 20.66,
+          "fee_buy": 1.0575,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1795049153,
+          "fee_sell": 0.0,
+          "pnl": 9.6205
+        }
+      ],
+      "pnl": 9.6205,
+      "entry": {
+        "t": 1794973809,
+        "side": "A",
+        "price": 0.295,
+        "shares": 101.69491525423729,
+        "lead_h": 20.66,
+        "fee_buy": 1.0575
+      },
+      "pregame_coverage_h": 131.0,
+      "full_24h": true
+    },
+    {
+      "game": "20261118 ATL-OKC",
+      "title": "Hawks vs. Thunder",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.285,
+          "shares": 105.26,
+          "entry_t": 1794963632,
+          "lead_h": 23.99,
+          "fee_buy": 1.0725,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1795051829,
+          "fee_sell": 0.0,
+          "pnl": 11.0328
+        }
+      ],
+      "pnl": 11.0328,
+      "entry": {
+        "t": 1794963632,
+        "side": "A",
+        "price": 0.285,
+        "shares": 105.26315789473685,
+        "lead_h": 23.99,
+        "fee_buy": 1.0725
+      },
+      "pregame_coverage_h": 131.5,
+      "full_24h": true
+    },
+    {
+      "game": "20261118 DET-NOP",
+      "title": "Pistons vs. Pelicans",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.285,
+          "shares": 105.26,
+          "entry_t": 1794977412,
+          "lead_h": 20.16,
+          "fee_buy": 1.0725,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1795051830,
+          "fee_sell": 0.0,
+          "pnl": 11.0328
+        }
+      ],
+      "pnl": 11.0328,
+      "entry": {
+        "t": 1794977412,
+        "side": "B",
+        "price": 0.285,
+        "shares": 105.26315789473685,
+        "lead_h": 20.16,
+        "fee_buy": 1.0725
+      },
+      "pregame_coverage_h": 131.5,
+      "full_24h": true
+    },
+    {
+      "game": "20261118 GSW-DAL",
+      "title": "Warriors vs. Mavericks",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 131.5,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261118 BOS-DEN",
+      "title": "Celtics vs. Nuggets",
+      "granularity": "1w/5",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 133.0,
+      "full_24h": true,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261118 PHX-SAC",
+      "title": "Suns vs. Kings",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.295,
+          "shares": 101.69,
+          "entry_t": 1794970813,
+          "lead_h": 24.0,
+          "fee_buy": 1.0575,
+          "exit": "Q4_START",
+          "exit_price": 0.029,
+          "exit_t": 1795063652,
+          "fee_sell": 0.1432,
+          "pnl": -28.2515
+        }
+      ],
+      "pnl": -28.2515,
+      "entry": {
+        "t": 1794970813,
+        "side": "B",
+        "price": 0.295,
+        "shares": 101.69491525423729,
+        "lead_h": 24.0,
+        "fee_buy": 1.0575
+      },
+      "pregame_coverage_h": 133.5,
+      "full_24h": true
+    },
+    {
+      "game": "20261118 UTA-LAL",
+      "title": "Jazz vs. Lakers",
+      "granularity": "1w/5",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.205,
+          "shares": 146.34,
+          "entry_t": 1794983115,
+          "lead_h": 20.58,
+          "fee_buy": 1.1925,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1795062912,
+          "fee_sell": 0.0,
+          "pnl": 27.3441
+        }
+      ],
+      "pnl": 27.3441,
+      "entry": {
+        "t": 1794983115,
+        "side": "A",
+        "price": 0.205,
+        "shares": 146.34146341463415,
+        "lead_h": 20.58,
+        "fee_buy": 1.1925
+      },
+      "pregame_coverage_h": 133.5,
+      "full_24h": true
+    },
+    {
+      "game": "20261119 GSW-MEM",
+      "title": "Warriors vs. Grizzlies",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 11.5,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261119 LAC-SAS",
+      "title": "Clippers vs. Spurs",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 11.5,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261119 NYK-MIN",
+      "title": "Knicks vs. Timberwolves",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 11.5,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261119 POR-MIL",
+      "title": "Trail Blazers vs. Bucks",
+      "granularity": "1d/1",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.215,
+          "shares": 139.53,
+          "entry_t": 1795094953,
+          "lead_h": 11.51,
+          "fee_buy": 1.1775,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1795140458,
+          "fee_sell": 0.0,
+          "pnl": 24.6365
+        }
+      ],
+      "pnl": 24.6365,
+      "entry": {
+        "t": 1795094953,
+        "side": "B",
+        "price": 0.215,
+        "shares": 139.53488372093022,
+        "lead_h": 11.51,
+        "fee_buy": 1.1775
+      },
+      "pregame_coverage_h": 11.5,
+      "full_24h": false
+    },
+    {
+      "game": "20261120 CHA-ATL",
+      "title": "Hornets vs. Hawks",
+      "granularity": "1d/1",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.295,
+          "shares": 101.69,
+          "entry_t": 1795212254,
+          "lead_h": 1.93,
+          "fee_buy": 1.0575,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1795220490,
+          "fee_sell": 0.0,
+          "pnl": 9.6205
+        }
+      ],
+      "pnl": 9.6205,
+      "entry": {
+        "t": 1795212254,
+        "side": "A",
+        "price": 0.295,
+        "shares": 101.69491525423729,
+        "lead_h": 1.93,
+        "fee_buy": 1.0575
+      },
+      "pregame_coverage_h": 17.1,
+      "full_24h": false
+    },
+    {
+      "game": "20261120 IND-CLE",
+      "title": "Pacers vs. Cavaliers",
+      "granularity": "1d/1",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.295,
+          "shares": 101.69,
+          "entry_t": 1795157713,
+          "lead_h": 17.58,
+          "fee_buy": 1.0575,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1795223488,
+          "fee_sell": 0.0,
+          "pnl": 9.6205
+        }
+      ],
+      "pnl": 9.6205,
+      "entry": {
+        "t": 1795157713,
+        "side": "A",
+        "price": 0.295,
+        "shares": 101.69491525423729,
+        "lead_h": 17.58,
+        "fee_buy": 1.0575
+      },
+      "pregame_coverage_h": 17.6,
+      "full_24h": false
+    },
+    {
+      "game": "20261120 ORL-BKN",
+      "title": "Magic vs. Nets",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 17.6,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261120 TOR-DET",
+      "title": "Raptors vs. Pistons",
+      "granularity": "1d/1",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.285,
+          "shares": 105.26,
+          "entry_t": 1795157714,
+          "lead_h": 17.58,
+          "fee_buy": 1.0725,
+          "exit": "TP",
+          "exit_price": 0.4,
+          "exit_t": 1795223949,
+          "fee_sell": 0.0,
+          "pnl": 11.0328
+        }
+      ],
+      "pnl": 11.0328,
+      "entry": {
+        "t": 1795157714,
+        "side": "A",
+        "price": 0.285,
+        "shares": 105.26315789473685,
+        "lead_h": 17.58,
+        "fee_buy": 1.0725
+      },
+      "pregame_coverage_h": 17.6,
+      "full_24h": false
+    },
+    {
+      "game": "20261120 NOP-OKC",
+      "title": "Pelicans vs. Thunder",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 18.1,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261120 WAS-CHI",
+      "title": "Wizards vs. Bulls",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 18.1,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261120 PHX-UTA",
+      "title": "Suns vs. Jazz",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 19.6,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261120 HOU-DEN",
+      "title": "Rockets vs. Nuggets",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 20.1,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261120 SAC-LAL",
+      "title": "Kings vs. Lakers",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 20.1,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261121 MIL-PHI",
+      "title": "Bucks vs. 76ers",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 10.9,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261121 POR-NYK",
+      "title": "Trail Blazers vs. Knicks",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 17.4,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261121 LAC-DAL",
+      "title": "Clippers vs. Mavericks",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 17.9,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261121 MEM-MIN",
+      "title": "Grizzlies vs. Timberwolves",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 17.9,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261121 NOP-SAS",
+      "title": "Pelicans vs. Spurs",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 17.9,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261121 BOS-SAC",
+      "title": "Celtics vs. Kings",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 19.9,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    }
+  ],
+  "notes": "30U/腿，买入价 0.20-0.30，买入按市价算 taker 费 0.05；触 0.40 按挂单卖费 0；Q4 开始市价卖算 taker 费；无止损。价格序列单价同时当 bid/ask，成交略高估；5 分钟粒度漏短暂触及，0.40 触及是下限。39 场赛前 24h 全覆盖，28 场只有部分（最少 17.4h），入场腿数是下限。Q4 开始取 plays 第一条 period==4 的时间。"
+}
