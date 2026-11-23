@@ -323,8 +323,9 @@ DEFAULT_PREGAME_2030 = {
     "size_u": 30.0,            # 每腿 30U（份数 = 30 / 买入价）
     "lo": 0.20,                # 买入价下限（含）
     "hi": 0.30,                # 买入价上限（含）
-    "target": 0.40,            # 落袋价（挂 0.40 卖单，maker，费 0）
+    "target": 0.50,            # 落袋价（挂 0.50 卖单，maker，费 0）
     "entry_window_s": 86400,   # 买入窗口：T0-24h 至 T0（只在开赛前买）
+    "exit_q3_clock_s": 360,    # 出场：第三节中段 = Q3 比赛时钟剩 6:00
 }
 
 
@@ -336,24 +337,28 @@ class Pregame2030Strategy(Strategy):
     - 买入窗口：开赛前 1 天都可以（T0-24h ~ T0）；窗口内卖价第一次进区间就
       市价买入 30U（份数 = 30 / 买入价，taker 费 = fee_rate x 份数 x 价 x (1-价)）。
       每场最多一腿。
-    - 买入后等开赛；盘中第一次触及 0.40 就全部卖出（挂 0.40 卖单，maker，费 0）。
-    - 到第四节开始（ESPN 时钟第一次 period >= 4）还没触及 0.40，就按当时买价
-      市价全部卖出（taker 费）。无止损。
+    - 买入后等开赛；盘中第一次触及 0.50 就全部卖出（挂 0.50 卖单，maker，费 0）。
+    - 到第三节中段（Q3 比赛时钟剩 6:00）还没触及 0.50，就按当时买价市价全部
+      卖出（taker 费）。无止损。Q3 中段时钟线缺失时用 Q4 开始兜底。
     - 终场仍有持仓（时钟全程缺失的极端情况）才按胜负结算；买入费计入结算盈亏。
 
     与 scalp_dip 的区别：只做赛前、不做赛中低吸；买入价是区间不是固定 0.30；
-    份数按 30U 算不是固定 30 份；出场提前到 Q4 开始（不是 Q4 剩 2:00）；
+    份数按 30U 算不是固定 30 份；出场在 Q3 中段（不是 Q4 剩 2:00）；
     没有止损。买入是市价买（taker 费），不是挂单（maker）。
 
-    回测（backtest_nba_v2.py，2026-11-23，67 场）：入场 25 腿，触 0.40 落袋
-    19 次（+294.82），Q4 开始市价出 6 次（-164.80，出场价 0.0015-0.0515），
-    胜率 76%，总盈亏 +130.03，每腿平均 +5.20。42 场赛前价格没进区间所以不买；
-    25 腿里 18 腿是开赛 12 小时前买的——1 天窗口是入场的前提。
+    回测（backtest_nba_v2.py，2026-11-23，74 场，止盈 0.50 + Q3 中段出场）：
+    入场 29 腿，触 0.50 落袋 12 次（+281.97），Q3 中段市价出 17 次（-192.31），
+    Q4 兜底 0 次，胜率 51.7%，总盈亏 +89.66，每腿平均 +3.09。42 场赛前价格没进
+    区间所以不买；29 腿里 21 腿是开赛 12 小时前买的——1 天窗口是入场的前提。
+    （67 场时是 +122.55；今天 7 场新增 4 腿，0 落袋，-32.89，总 +89.66。
+    同止盈 0.50 但 Q4 开始出场、67 场时是 +145.79：Q3 中段出场少落袋 2 腿
+    ——PHX-DEN +37.01→+22.41、DET-SAS +25.50→-12.11，Q4 的后半段反弹被放弃；
+    但提前出场的腿平均少亏。仍为正。）
 
     接法与 scalp_dip 一样：策略自管执行，on_book 永远返回 []。
     时钟走 ESPN（quant_platform/nba_clock.py）；买入那一下要求时钟可达
-    （否则 Q4 出场没法管），时钟缺失时这一下先不买、继续等窗口，
-    不像 scalp_dip 那样直接放弃；持仓后只按价格管理 0.40 落袋。
+    （否则 Q3 中段出场没法管），时钟缺失时这一下先不买、继续等窗口，
+    不像 scalp_dip 那样直接放弃；持仓后只按价格管理（触及目标落袋）。
     """
     name = "pregame_2030"
     tags = ["nba"]
@@ -453,24 +458,29 @@ class Pregame2030Strategy(Strategy):
                                f"{'赢' if won else '输'}，盈亏 {pnl:+.2f}")
                 st["phase"] = "DONE"
                 return []
-            # 0.40 落袋（maker，费 0；买入费已计）
+            # 触及目标落袋（maker，费 0；买入费已计）
             if bid is not None and bid >= p["target"]:
                 pnl = ctx["ledger"].close_leg(leg_id, p["target"], fee_buy, ts=now)
-                self._log(ctx, f"{q} 触及 0.40 落袋：{'A' if side == 'a' else 'B'}队 "
-                               f"{st['entry_price']:.2f} 买入 0.40 卖出，盈亏 {pnl:+.2f}")
+                self._log(ctx, f"{q} 触及 {p['target']:.2f} 落袋：{'A' if side == 'a' else 'B'}队 "
+                               f"{st['entry_price']:.2f} 买入 {p['target']:.2f} 卖出，盈亏 {pnl:+.2f}")
                 st["phase"] = "DONE"
                 return []
-            # Q4 开始：市价平掉（taker 费 + 买入费）
+            # Q3 中段（比赛时钟剩 6:00）：市价平掉（taker 费 + 买入费）。
+            # 时钟跳过 Q3 中段直接到 Q4（漏轮询）时也出场——Q4 开始是兜底。
             if snap is not None and snap["state"] == "in" \
-                    and snap["period"] is not None and snap["period"] >= 4:
+                    and snap["period"] is not None \
+                    and ((snap["period"] == 3 and snap["clock_s"] is not None
+                          and snap["clock_s"] <= p["exit_q3_clock_s"])
+                         or snap["period"] >= 4):
                 if bid is None:
-                    self._log(ctx, f"{q} Q4 开始该出场但无买价，"
+                    self._log(ctx, f"{q} Q3 中段该出场但无买价，"
                                    "等下一 tick（终场结算兜底）")
                     return []
                 fee_sell = fee_rate * shares * bid * (1 - bid)
                 pnl = ctx["ledger"].close_leg(leg_id, bid, fee_sell + fee_buy,
                                               ts=now)
-                self._log(ctx, f"{q} Q4 开始未到 0.40，市价 {bid:.2f} 平掉"
+                where = "Q3 中段" if snap["period"] == 3 else "Q4 开始（Q3 中段漏过）"
+                self._log(ctx, f"{q} {where}未到 {p['target']:.2f}，市价 {bid:.2f} 平掉"
                                f"（taker 费 {fee_sell:.2f} + 买入费 {fee_buy:.2f}），"
                                f"盈亏 {pnl:+.2f}")
                 st["phase"] = "DONE"
@@ -517,7 +527,7 @@ class Pregame2030Strategy(Strategy):
         self._log(ctx, f"{q} 赛前买入：{'A' if side == 'a' else 'B'}队 "
                        f"{ask:.2f}x{shares:.1f} 份（30U，taker 费 {fee_buy:.2f}）"
                        f"{'（两边都在区间，先买 A）' if both else ''}，"
-                       "等开赛，触 0.40 落袋，否则 Q4 开始市价出")
+                       f"等开赛，触 {p['target']:.2f} 落袋，否则 Q3 中段市价出")
         return []
 
 

@@ -82,12 +82,12 @@ def buy_a_025(strat, ledger, risk, logs):
 def test_entry_in_range_then_tp():
     strat, ledger, risk, logs = make()
     buy_a_025(strat, ledger, risk, logs)
-    # 赛中摸到 0.40 落袋：收 120x0.40=48，买入费 1.125，成本 30，盈亏 +16.875
+    # 赛中摸到 0.50 落袋：收 120x0.50=60，买入费 1.125，成本 30，盈亏 +28.875
     strat.clock.snap = in_game(2, 600)
-    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.42, a_ask=0.43, b_bid=0.58, b_ask=0.59)
+    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.52, a_ask=0.53, b_bid=0.47, b_ask=0.48)
     assert len(ledger.legs) == 0
-    assert abs(ledger.cash - 1016.875) < 0.01, f"cash 应为 1016.875，实际 {ledger.cash}"
-    assert abs(ledger.trades[-1]["locked_pnl"] - 16.875) < 0.01
+    assert abs(ledger.cash - 1028.875) < 0.01, f"cash 应为 1028.875，实际 {ledger.cash}"
+    assert abs(ledger.trades[-1]["locked_pnl"] - 28.875) < 0.01
     assert has(logs, "落袋")
 
 
@@ -139,28 +139,53 @@ def test_no_entry_after_tipoff():
     assert has(logs, "已过赛前窗口")
 
 
-def test_q4_start_exit():
+def test_q3_mid_exit():
     strat, ledger, risk, logs = make()
     buy_a_025(strat, ledger, risk, logs)
-    # Q4 开始（period 4，不管时钟剩多少）：市价 0.05 平掉
+    # Q3 剩 6:00（360 秒）仍未到 0.50：市价 0.05 平掉
     # 收 120x0.05=6.00，卖出 taker 费 0.05x120x0.05x0.95=0.285，买入费 1.125
-    strat.clock.snap = in_game(4, 700)
-    book(strat, ledger, risk, logs, T0 + 6600, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    strat.clock.snap = in_game(3, 360)
+    book(strat, ledger, risk, logs, T0 + 5400, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
     assert len(ledger.legs) == 0
     # 盈亏 6.00 - 0.285 - 1.125 - 30 = -25.41；cash 970 + 6 - 1.41 = 974.59
     assert abs(ledger.trades[-1]["locked_pnl"] + 25.41) < 0.01
     assert abs(ledger.cash - 974.59) < 0.01, f"cash 应为 974.59，实际 {ledger.cash}"
-    assert has(logs, "Q4 开始")
+    assert has(logs, "Q3 中段")
 
 
-def test_q4_exit_waits_for_bid():
+def test_q3_mid_not_before_threshold():
     strat, ledger, risk, logs = make()
     buy_a_025(strat, ledger, risk, logs)
+    # Q3 剩 361 秒：还没到中段，不出场
+    strat.clock.snap = in_game(3, 361)
+    book(strat, ledger, risk, logs, T0 + 5300, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    assert len(ledger.legs) == 1, "Q3 剩 361 秒未到中段，不应出场"
+    # Q3 剩 360 秒：到中段，出场
+    strat.clock.snap = in_game(3, 360)
+    book(strat, ledger, risk, logs, T0 + 5400, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    assert len(ledger.legs) == 0
+    assert has(logs, "Q3 中段")
+
+
+def test_q4_fallback_exit():
+    strat, ledger, risk, logs = make()
+    buy_a_025(strat, ledger, risk, logs)
+    # 时钟跳过 Q3 中段直接到 Q4（漏轮询）：Q4 开始兜底出场
     strat.clock.snap = in_game(4, 700)
-    book(strat, ledger, risk, logs, T0 + 6600, a_bid=None, a_ask=0.06, b_bid=0.94, b_ask=0.95)
-    assert len(ledger.legs) == 1, "Q4 开始但无买价，应等下一 tick，不应丢腿"
+    book(strat, ledger, risk, logs, T0 + 6600, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    assert len(ledger.legs) == 0
+    assert abs(ledger.trades[-1]["locked_pnl"] + 25.41) < 0.01
+    assert has(logs, "Q4 开始", "漏过")
+
+
+def test_q3_mid_exit_waits_for_bid():
+    strat, ledger, risk, logs = make()
+    buy_a_025(strat, ledger, risk, logs)
+    strat.clock.snap = in_game(3, 360)
+    book(strat, ledger, risk, logs, T0 + 5400, a_bid=None, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    assert len(ledger.legs) == 1, "Q3 中段但无买价，应等下一 tick，不应丢腿"
     assert has(logs, "无买价")
-    book(strat, ledger, risk, logs, T0 + 6605, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    book(strat, ledger, risk, logs, T0 + 5405, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
     assert len(ledger.legs) == 0
 
 
@@ -176,11 +201,11 @@ def test_clock_missing_blocks_entry_but_not_tp():
     book(strat, ledger, risk, logs, T0 - 11 * 3600,
          a_bid=0.24, a_ask=0.25, b_bid=0.74, b_ask=0.75)
     assert len(ledger.legs) == 1
-    # 持仓后时钟又丢：0.40 落袋只看价格，照样走
+    # 持仓后时钟又丢：0.50 落袋只看价格，照样走
     strat.clock.snap = None
-    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.42, a_ask=0.43, b_bid=0.58, b_ask=0.59)
+    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.52, a_ask=0.53, b_bid=0.47, b_ask=0.48)
     assert len(ledger.legs) == 0
-    assert abs(ledger.trades[-1]["locked_pnl"] - 16.875) < 0.01
+    assert abs(ledger.trades[-1]["locked_pnl"] - 28.875) < 0.01
     assert has(logs, "落袋")
 
 

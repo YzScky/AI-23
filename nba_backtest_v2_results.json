@@ -1,33 +1,49 @@
 {
-  "games": 67,
-  "legs": 25,
-  "games_with_entry": 25,
-  "games_no_entry": 42,
+  "target": 0.5,
+  "exit_q3_clock_s": 360,
+  "games": 74,
+  "legs": 29,
+  "games_with_entry": 29,
+  "games_no_entry": 45,
   "no_entry_reasons": {
-    "no_point_in_range": 42
+    "no_point_in_range": 45
   },
   "full_24h_games": 39,
-  "tp_count": 19,
-  "tp_pnl": 294.82,
-  "q4_count": 6,
-  "q4_pnl": -164.8,
-  "q4_exit_prices": [
-    0.0015,
-    0.0235,
-    0.029,
-    0.035,
+  "tp_count": 12,
+  "tp_pnl": 281.97,
+  "q3_count": 17,
+  "q3_pnl": -192.31,
+  "q3_exit_prices": [
+    0.005,
+    0.025,
     0.045,
-    0.0515
+    0.095,
+    0.095,
+    0.115,
+    0.135,
+    0.155,
+    0.155,
+    0.165,
+    0.175,
+    0.195,
+    0.215,
+    0.215,
+    0.255,
+    0.305,
+    0.405
   ],
+  "q4_count": 0,
+  "q4_pnl": 0,
+  "q4_exit_prices": [],
   "settle_count": 0,
   "settle_pnl": 0,
-  "win_legs": 19,
-  "win_rate": 0.76,
-  "total_pnl": 130.03,
-  "avg_pnl_per_game": 1.94,
-  "avg_pnl_per_leg": 5.2,
-  "max_win_leg": 27.34,
-  "max_loss_leg": -30.98,
+  "win_legs": 15,
+  "win_rate": 0.5172,
+  "total_pnl": 89.66,
+  "avg_pnl_per_game": 1.21,
+  "avg_pnl_per_leg": 3.09,
+  "max_win_leg": 30.09,
+  "max_loss_leg": -30.5,
   "entry_prices": [
     0.205,
     0.205,
@@ -37,6 +53,9 @@
     0.215,
     0.22,
     0.225,
+    0.235,
+    0.235,
+    0.235,
     0.245,
     0.255,
     0.255,
@@ -53,10 +72,12 @@
     0.295,
     0.295,
     0.295,
+    0.295,
     0.295
   ],
   "entry_lead_h": [
     0.24,
+    1.48,
     1.66,
     1.93,
     10.41,
@@ -66,7 +87,10 @@
     13.91,
     17.58,
     17.58,
+    18.88,
+    19.86,
     20.16,
+    20.36,
     20.58,
     20.66,
     21.5,
@@ -82,11 +106,11 @@
     24.0,
     24.0
   ],
-  "total_fee_buy": 27.91,
-  "total_fee_sell": 1.11,
+  "total_fee_buy": 32.41,
+  "total_fee_sell": 13.58,
   "granularity_mix": {
     "1w/5": 48,
-    "1d/1": 19
+    "1d/1": 26
   },
   "per_game": [
     {
@@ -101,14 +125,14 @@
           "entry_t": 1794576919,
           "lead_h": 10.41,
           "fee_buy": 1.1625,
-          "exit": "Q4_START",
-          "exit_price": 0.0515,
-          "exit_t": 1794621140,
-          "fee_sell": 0.3257,
-          "pnl": -24.6215
+          "exit": "Q3_MID",
+          "exit_price": 0.025,
+          "exit_t": 1794619988,
+          "fee_sell": 0.1625,
+          "pnl": -27.9917
         }
       ],
-      "pnl": -24.6215,
+      "pnl": -27.9917,
       "entry": {
         "t": 1794576919,
         "side": "A",
@@ -133,13 +157,13 @@
           "lead_h": 10.41,
           "fee_buy": 1.1025,
           "exit": "TP",
-          "exit_price": 0.4,
+          "exit_price": 0.5,
           "exit_t": 1794618053,
           "fee_sell": 0.0,
-          "pnl": 14.1805
+          "pnl": 25.5013
         }
       ],
-      "pnl": 14.1805,
+      "pnl": 25.5013,
       "entry": {
         "t": 1794576918,
         "side": "B",
@@ -164,13 +188,13 @@
           "lead_h": 11.41,
           "fee_buy": 1.0725,
           "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1794619236,
+          "exit_price": 0.5,
+          "exit_t": 1794619820,
           "fee_sell": 0.0,
-          "pnl": 11.0328
+          "pnl": 21.5591
         }
       ],
-      "pnl": 11.0328,
+      "pnl": 21.5591,
       "entry": {
         "t": 1794576918,
         "side": "B",
@@ -238,14 +262,14 @@
           "entry_t": 1794624325,
           "lead_h": 0.24,
           "fee_buy": 1.1925,
-          "exit": "Q4_START",
-          "exit_price": 0.035,
-          "exit_t": 1794632301,
-          "fee_sell": 0.2471,
-          "pnl": -26.3176
+          "exit": "Q3_MID",
+          "exit_price": 0.095,
+          "exit_t": 1794631250,
+          "fee_sell": 0.6291,
+          "pnl": -17.9192
         }
       ],
-      "pnl": -26.3176,
+      "pnl": -17.9192,
       "entry": {
         "t": 1794624325,
         "side": "B",
@@ -270,13 +294,13 @@
           "lead_h": 13.91,
           "fee_buy": 1.0875,
           "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1794630020,
+          "exit_price": 0.5,
+          "exit_t": 1794630919,
           "fee_sell": 0.0,
-          "pnl": 12.5489
+          "pnl": 23.458
         }
       ],
-      "pnl": 12.5489,
+      "pnl": 23.458,
       "entry": {
         "t": 1794576919,
         "side": "B",
@@ -312,13 +336,13 @@
           "lead_h": 1.66,
           "fee_buy": 1.1325,
           "exit": "TP",
-          "exit_price": 0.4,
+          "exit_price": 0.5,
           "exit_t": 1794706224,
           "fee_sell": 0.0,
-          "pnl": 17.8471
+          "pnl": 30.092
         }
       ],
-      "pnl": 17.8471,
+      "pnl": 30.092,
       "entry": {
         "t": 1794696624,
         "side": "B",
@@ -375,14 +399,14 @@
           "entry_t": 1794679225,
           "lead_h": 23.99,
           "fee_buy": 1.1925,
-          "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1794767711,
-          "fee_sell": 0.0,
-          "pnl": 27.3441
+          "exit": "Q3_MID",
+          "exit_price": 0.215,
+          "exit_t": 1794771445,
+          "fee_sell": 1.2349,
+          "pnl": -0.964
         }
       ],
-      "pnl": 27.3441,
+      "pnl": -0.964,
       "entry": {
         "t": 1794679225,
         "side": "A",
@@ -461,14 +485,14 @@
           "entry_t": 1794709813,
           "lead_h": 21.5,
           "fee_buy": 1.1925,
-          "exit": "Q4_START",
-          "exit_price": 0.0015,
-          "exit_t": 1794794581,
-          "fee_sell": 0.011,
-          "pnl": -30.984
+          "exit": "Q3_MID",
+          "exit_price": 0.005,
+          "exit_t": 1794792843,
+          "fee_sell": 0.0364,
+          "pnl": -30.4972
         }
       ],
-      "pnl": -30.984,
+      "pnl": -30.4972,
       "entry": {
         "t": 1794709813,
         "side": "B",
@@ -493,13 +517,13 @@
           "lead_h": 23.99,
           "fee_buy": 1.1175,
           "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1794792633,
+          "exit_price": 0.5,
+          "exit_t": 1794792928,
           "fee_sell": 0.0,
-          "pnl": 15.9413
+          "pnl": 27.706
         }
       ],
-      "pnl": 15.9413,
+      "pnl": 27.706,
       "entry": {
         "t": 1794704433,
         "side": "B",
@@ -523,14 +547,14 @@
           "entry_t": 1794708041,
           "lead_h": 23.99,
           "fee_buy": 1.1925,
-          "exit": "Q4_START",
-          "exit_price": 0.0235,
-          "exit_t": 1794801093,
-          "fee_sell": 0.1679,
-          "pnl": -27.9214
+          "exit": "Q3_MID",
+          "exit_price": 0.045,
+          "exit_t": 1794800319,
+          "fee_sell": 0.3145,
+          "pnl": -24.9216
         }
       ],
-      "pnl": -27.9214,
+      "pnl": -24.9216,
       "entry": {
         "t": 1794708041,
         "side": "B",
@@ -554,14 +578,14 @@
           "entry_t": 1794787223,
           "lead_h": 23.99,
           "fee_buy": 1.1175,
-          "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1794876031,
-          "fee_sell": 0.0,
-          "pnl": 15.9413
+          "exit": "Q3_MID",
+          "exit_price": 0.135,
+          "exit_t": 1794879136,
+          "fee_sell": 0.6869,
+          "pnl": -15.922
         }
       ],
-      "pnl": 15.9413,
+      "pnl": -15.922,
       "entry": {
         "t": 1794787223,
         "side": "A",
@@ -597,13 +621,13 @@
           "lead_h": 23.99,
           "fee_buy": 1.0875,
           "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1794877542,
+          "exit_price": 0.5,
+          "exit_t": 1794878127,
           "fee_sell": 0.0,
-          "pnl": 12.5489
+          "pnl": 23.458
         }
       ],
-      "pnl": 12.5489,
+      "pnl": 23.458,
       "entry": {
         "t": 1794787228,
         "side": "A",
@@ -671,14 +695,14 @@
           "entry_t": 1794794416,
           "lead_h": 24.0,
           "fee_buy": 1.17,
-          "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1794886816,
-          "fee_sell": 0.0,
-          "pnl": 23.3755
+          "exit": "Q3_MID",
+          "exit_price": 0.405,
+          "exit_t": 1794887074,
+          "fee_sell": 1.643,
+          "pnl": 22.4143
         }
       ],
-      "pnl": 23.3755,
+      "pnl": 22.4143,
       "entry": {
         "t": 1794794416,
         "side": "A",
@@ -713,14 +737,14 @@
           "entry_t": 1794877217,
           "lead_h": 24.0,
           "fee_buy": 1.1025,
-          "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1794970218,
-          "fee_sell": 0.0,
-          "pnl": 14.1805
+          "exit": "Q3_MID",
+          "exit_price": 0.175,
+          "exit_t": 1794969693,
+          "fee_sell": 0.8172,
+          "pnl": -12.1084
         }
       ],
-      "pnl": 14.1805,
+      "pnl": -12.1084,
       "entry": {
         "t": 1794877217,
         "side": "A",
@@ -767,13 +791,13 @@
           "lead_h": 24.0,
           "fee_buy": 1.1175,
           "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1794977110,
+          "exit_price": 0.5,
+          "exit_t": 1794978014,
           "fee_sell": 0.0,
-          "pnl": 15.9413
+          "pnl": 27.706
         }
       ],
-      "pnl": 15.9413,
+      "pnl": 27.706,
       "entry": {
         "t": 1794888014,
         "side": "A",
@@ -797,14 +821,14 @@
           "entry_t": 1794960022,
           "lead_h": 23.99,
           "fee_buy": 1.0575,
-          "exit": "Q4_START",
-          "exit_price": 0.045,
-          "exit_t": 1795053292,
-          "fee_sell": 0.2185,
-          "pnl": -26.6997
+          "exit": "Q3_MID",
+          "exit_price": 0.095,
+          "exit_t": 1795052226,
+          "fee_sell": 0.4372,
+          "pnl": -21.8337
         }
       ],
-      "pnl": -26.6997,
+      "pnl": -21.8337,
       "entry": {
         "t": 1794960022,
         "side": "B",
@@ -873,13 +897,13 @@
           "lead_h": 20.66,
           "fee_buy": 1.0575,
           "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1795049153,
+          "exit_price": 0.5,
+          "exit_t": 1795050622,
           "fee_sell": 0.0,
-          "pnl": 9.6205
+          "pnl": 19.79
         }
       ],
-      "pnl": 9.6205,
+      "pnl": 19.79,
       "entry": {
         "t": 1794973809,
         "side": "A",
@@ -904,13 +928,13 @@
           "lead_h": 23.99,
           "fee_buy": 1.0725,
           "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1795051829,
+          "exit_price": 0.5,
+          "exit_t": 1795053012,
           "fee_sell": 0.0,
-          "pnl": 11.0328
+          "pnl": 21.5591
         }
       ],
-      "pnl": 11.0328,
+      "pnl": 21.5591,
       "entry": {
         "t": 1794963632,
         "side": "A",
@@ -934,14 +958,14 @@
           "entry_t": 1794977412,
           "lead_h": 20.16,
           "fee_buy": 1.0725,
-          "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1795051830,
-          "fee_sell": 0.0,
-          "pnl": 11.0328
+          "exit": "Q3_MID",
+          "exit_price": 0.215,
+          "exit_t": 1795055926,
+          "fee_sell": 0.8883,
+          "pnl": -9.3292
         }
       ],
-      "pnl": 11.0328,
+      "pnl": -9.3292,
       "entry": {
         "t": 1794977412,
         "side": "B",
@@ -987,14 +1011,14 @@
           "entry_t": 1794970813,
           "lead_h": 24.0,
           "fee_buy": 1.0575,
-          "exit": "Q4_START",
-          "exit_price": 0.029,
-          "exit_t": 1795063652,
-          "fee_sell": 0.1432,
-          "pnl": -28.2515
+          "exit": "Q3_MID",
+          "exit_price": 0.155,
+          "exit_t": 1795062491,
+          "fee_sell": 0.666,
+          "pnl": -15.9608
         }
       ],
-      "pnl": -28.2515,
+      "pnl": -15.9608,
       "entry": {
         "t": 1794970813,
         "side": "B",
@@ -1018,14 +1042,14 @@
           "entry_t": 1794983115,
           "lead_h": 20.58,
           "fee_buy": 1.1925,
-          "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1795062912,
-          "fee_sell": 0.0,
-          "pnl": 27.3441
+          "exit": "Q3_MID",
+          "exit_price": 0.255,
+          "exit_t": 1795063507,
+          "fee_sell": 1.3901,
+          "pnl": 4.7345
         }
       ],
-      "pnl": 27.3441,
+      "pnl": 4.7345,
       "entry": {
         "t": 1794983115,
         "side": "A",
@@ -1082,14 +1106,14 @@
           "entry_t": 1795094953,
           "lead_h": 11.51,
           "fee_buy": 1.1775,
-          "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1795140458,
-          "fee_sell": 0.0,
-          "pnl": 24.6365
+          "exit": "Q3_MID",
+          "exit_price": 0.165,
+          "exit_t": 1795142772,
+          "fee_sell": 0.9612,
+          "pnl": -9.1154
         }
       ],
-      "pnl": 24.6365,
+      "pnl": -9.1154,
       "entry": {
         "t": 1795094953,
         "side": "B",
@@ -1114,13 +1138,13 @@
           "lead_h": 1.93,
           "fee_buy": 1.0575,
           "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1795220490,
+          "exit_price": 0.5,
+          "exit_t": 1795221199,
           "fee_sell": 0.0,
-          "pnl": 9.6205
+          "pnl": 19.79
         }
       ],
-      "pnl": 9.6205,
+      "pnl": 19.79,
       "entry": {
         "t": 1795212254,
         "side": "A",
@@ -1145,13 +1169,13 @@
           "lead_h": 17.58,
           "fee_buy": 1.0575,
           "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1795223488,
+          "exit_price": 0.5,
+          "exit_t": 1795223948,
           "fee_sell": 0.0,
-          "pnl": 9.6205
+          "pnl": 19.79
         }
       ],
-      "pnl": 9.6205,
+      "pnl": 19.79,
       "entry": {
         "t": 1795157713,
         "side": "A",
@@ -1187,13 +1211,13 @@
           "lead_h": 17.58,
           "fee_buy": 1.0725,
           "exit": "TP",
-          "exit_price": 0.4,
-          "exit_t": 1795223949,
+          "exit_price": 0.5,
+          "exit_t": 1795224825,
           "fee_sell": 0.0,
-          "pnl": 11.0328
+          "pnl": 21.5591
         }
       ],
-      "pnl": 11.0328,
+      "pnl": 21.5591,
       "entry": {
         "t": 1795157714,
         "side": "A",
@@ -1325,7 +1349,164 @@
       "pregame_coverage_h": 19.9,
       "full_24h": false,
       "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261122 DET-ATL",
+      "title": "Pistons vs. Hawks",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 15.4,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261122 OKC-MIA",
+      "title": "Thunder vs. Heat",
+      "granularity": "1d/1",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.295,
+          "shares": 101.69,
+          "entry_t": 1795383083,
+          "lead_h": 1.48,
+          "fee_buy": 1.0575,
+          "exit": "Q3_MID",
+          "exit_price": 0.115,
+          "exit_t": 1795393929,
+          "fee_sell": 0.5175,
+          "pnl": -19.8801
+        }
+      ],
+      "pnl": -19.8801,
+      "entry": {
+        "t": 1795383083,
+        "side": "A",
+        "price": 0.295,
+        "shares": 101.69491525423729,
+        "lead_h": 1.48,
+        "fee_buy": 1.0575
+      },
+      "pregame_coverage_h": 17.9,
+      "full_24h": false
+    },
+    {
+      "game": "20261122 DAL-UTA",
+      "title": "Mavericks vs. Jazz",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 18.9,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261122 DEN-CHI",
+      "title": "Nuggets vs. Bulls",
+      "granularity": "1d/1",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.235,
+          "shares": 127.66,
+          "entry_t": 1795324044,
+          "lead_h": 18.88,
+          "fee_buy": 1.1475,
+          "exit": "Q3_MID",
+          "exit_price": 0.155,
+          "exit_t": 1795397480,
+          "fee_sell": 0.836,
+          "pnl": -12.1963
+        }
+      ],
+      "pnl": -12.1963,
+      "entry": {
+        "t": 1795324044,
+        "side": "B",
+        "price": 0.235,
+        "shares": 127.65957446808511,
+        "lead_h": 18.88,
+        "fee_buy": 1.1475
+      },
+      "pregame_coverage_h": 18.9,
+      "full_24h": false
+    },
+    {
+      "game": "20261122 ORL-WAS",
+      "title": "Magic vs. Wizards",
+      "granularity": "1d/1",
+      "legs": [],
+      "pnl": 0.0,
+      "entry": null,
+      "pregame_coverage_h": 18.9,
+      "full_24h": false,
+      "no_entry_reason": "no_point_in_range"
+    },
+    {
+      "game": "20261122 IND-NYK",
+      "title": "Pacers vs. Knicks",
+      "granularity": "1d/1",
+      "legs": [
+        {
+          "side": "A",
+          "entry_price": 0.235,
+          "shares": 127.66,
+          "entry_t": 1795324104,
+          "lead_h": 19.86,
+          "fee_buy": 1.1475,
+          "exit": "Q3_MID",
+          "exit_price": 0.305,
+          "exit_t": 1795401712,
+          "fee_sell": 1.353,
+          "pnl": 6.4357
+        }
+      ],
+      "pnl": 6.4357,
+      "entry": {
+        "t": 1795324104,
+        "side": "A",
+        "price": 0.235,
+        "shares": 127.65957446808511,
+        "lead_h": 19.86,
+        "fee_buy": 1.1475
+      },
+      "pregame_coverage_h": 19.9,
+      "full_24h": false
+    },
+    {
+      "game": "20261122 BOS-GSW",
+      "title": "Celtics vs. Warriors",
+      "granularity": "1d/1",
+      "legs": [
+        {
+          "side": "B",
+          "entry_price": 0.235,
+          "shares": 127.66,
+          "entry_t": 1795324105,
+          "lead_h": 20.36,
+          "fee_buy": 1.1475,
+          "exit": "Q3_MID",
+          "exit_price": 0.195,
+          "exit_t": 1795403110,
+          "fee_sell": 1.002,
+          "pnl": -7.2559
+        }
+      ],
+      "pnl": -7.2559,
+      "entry": {
+        "t": 1795324105,
+        "side": "B",
+        "price": 0.235,
+        "shares": 127.65957446808511,
+        "lead_h": 20.36,
+        "fee_buy": 1.1475
+      },
+      "pregame_coverage_h": 20.4,
+      "full_24h": false
     }
   ],
-  "notes": "30U/腿，买入价 0.20-0.30，买入按市价算 taker 费 0.05；触 0.40 按挂单卖费 0；Q4 开始市价卖算 taker 费；无止损。价格序列单价同时当 bid/ask，成交略高估；5 分钟粒度漏短暂触及，0.40 触及是下限。39 场赛前 24h 全覆盖，28 场只有部分（最少 17.4h），入场腿数是下限。Q4 开始取 plays 第一条 period==4 的时间。"
+  "notes": "30U/腿，买入价 0.20-0.30，买入按市价算 taker 费 0.05；触 0.5 按挂单卖费 0；Q3 中段（比赛时钟剩 6:00）市价卖算 taker 费；无止损。价格序列单价同时当 bid/ask，成交略高估；5 分钟粒度漏短暂触及，0.5 触及是下限。39 场赛前 24h 全覆盖、35 场只有部分（最少 10.4h），入场腿数是下限。Q3 中段取 plays 第一条 period==3 且 clock<=360 的时间；缺失时用 Q4 开始兜底。"
 }
