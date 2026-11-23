@@ -1,4 +1,4 @@
-"""pregame_2030（赛前低吸 0.20-0.30，30U）离线单测：假时钟 + 合成盘口，不碰网络。
+"""pregame_2030（赛前低吸 0.10-0.30，30U）离线单测：假时钟 + 合成盘口，不碰网络。
 跑：python3 test_pregame2030.py"""
 import os
 import sys
@@ -82,28 +82,32 @@ def buy_a_025(strat, ledger, risk, logs):
 def test_entry_in_range_then_tp():
     strat, ledger, risk, logs = make()
     buy_a_025(strat, ledger, risk, logs)
-    # 赛中摸到 0.50 落袋：收 120x0.50=60，买入费 1.125，成本 30，盈亏 +28.875
+    # 赛中摸到 0.40 落袋：收 120x0.40=48，买入费 1.125，成本 30，盈亏 +16.875
     strat.clock.snap = in_game(2, 600)
-    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.52, a_ask=0.53, b_bid=0.47, b_ask=0.48)
+    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.42, a_ask=0.43, b_bid=0.58, b_ask=0.59)
     assert len(ledger.legs) == 0
-    assert abs(ledger.cash - 1028.875) < 0.01, f"cash 应为 1028.875，实际 {ledger.cash}"
-    assert abs(ledger.trades[-1]["locked_pnl"] - 28.875) < 0.01
+    assert abs(ledger.cash - 1016.875) < 0.01, f"cash 应为 1016.875，实际 {ledger.cash}"
+    assert abs(ledger.trades[-1]["locked_pnl"] - 16.875) < 0.01
     assert has(logs, "落袋")
 
 
 def test_entry_range_edges():
-    # 0.20 下限（含）：买入，150 份
+    # 0.10 下限（含）：买入，300 份
+    strat, ledger, risk, logs = make()
+    book(strat, ledger, risk, logs, T0 - 3600, a_bid=0.09, a_ask=0.10, b_bid=0.89, b_ask=0.90)
+    assert len(ledger.legs) == 1, "0.10 是下限（含），应买入"
+    # 0.20 区间内：买入，150 份
     strat, ledger, risk, logs = make()
     book(strat, ledger, risk, logs, T0 - 3600, a_bid=0.19, a_ask=0.20, b_bid=0.79, b_ask=0.80)
-    assert len(ledger.legs) == 1, "0.20 是下限（含），应买入"
+    assert len(ledger.legs) == 1, "0.20 在区间内，应买入"
     # 0.30 上限（含）：买入，100 份
     strat, ledger, risk, logs = make()
     book(strat, ledger, risk, logs, T0 - 3600, a_bid=0.29, a_ask=0.30, b_bid=0.69, b_ask=0.70)
     assert len(ledger.legs) == 1, "0.30 是上限（含），应买入"
-    # 0.19 / 0.31：不买
+    # 0.09 / 0.31：不买
     strat, ledger, risk, logs = make()
-    book(strat, ledger, risk, logs, T0 - 3600, a_bid=0.18, a_ask=0.19, b_bid=0.80, b_ask=0.81)
-    assert len(ledger.legs) == 0, "0.19 低于下限，不应买入"
+    book(strat, ledger, risk, logs, T0 - 3600, a_bid=0.08, a_ask=0.09, b_bid=0.90, b_ask=0.91)
+    assert len(ledger.legs) == 0, "0.09 低于下限，不应买入"
     strat, ledger, risk, logs = make()
     book(strat, ledger, risk, logs, T0 - 3600, a_bid=0.30, a_ask=0.31, b_bid=0.68, b_ask=0.69)
     assert len(ledger.legs) == 0, "0.31 高于上限，不应买入"
@@ -139,38 +143,38 @@ def test_no_entry_after_tipoff():
     assert has(logs, "已过赛前窗口")
 
 
-def test_q3_mid_exit():
+def test_q3_start_exit():
     strat, ledger, risk, logs = make()
     buy_a_025(strat, ledger, risk, logs)
-    # Q3 剩 6:00（360 秒）仍未到 0.50：市价 0.05 平掉
+    # Q3 开始（period 3，不管时钟剩多少）仍未到 0.40：市价 0.05 平掉
     # 收 120x0.05=6.00，卖出 taker 费 0.05x120x0.05x0.95=0.285，买入费 1.125
-    strat.clock.snap = in_game(3, 360)
+    strat.clock.snap = in_game(3, 720)
     book(strat, ledger, risk, logs, T0 + 5400, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
     assert len(ledger.legs) == 0
     # 盈亏 6.00 - 0.285 - 1.125 - 30 = -25.41；cash 970 + 6 - 1.41 = 974.59
     assert abs(ledger.trades[-1]["locked_pnl"] + 25.41) < 0.01
     assert abs(ledger.cash - 974.59) < 0.01, f"cash 应为 974.59，实际 {ledger.cash}"
-    assert has(logs, "Q3 中段")
+    assert has(logs, "Q3 开始")
 
 
-def test_q3_mid_not_before_threshold():
+def test_q2_does_not_exit():
     strat, ledger, risk, logs = make()
     buy_a_025(strat, ledger, risk, logs)
-    # Q3 剩 361 秒：还没到中段，不出场
-    strat.clock.snap = in_game(3, 361)
-    book(strat, ledger, risk, logs, T0 + 5300, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
-    assert len(ledger.legs) == 1, "Q3 剩 361 秒未到中段，不应出场"
-    # Q3 剩 360 秒：到中段，出场
-    strat.clock.snap = in_game(3, 360)
+    # Q2 剩 100 秒：还没到 Q3，不出场
+    strat.clock.snap = in_game(2, 100)
+    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
+    assert len(ledger.legs) == 1, "Q2 未到 Q3，不应出场"
+    # Q3 开始：出场
+    strat.clock.snap = in_game(3, 720)
     book(strat, ledger, risk, logs, T0 + 5400, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
     assert len(ledger.legs) == 0
-    assert has(logs, "Q3 中段")
+    assert has(logs, "Q3 开始")
 
 
 def test_q4_fallback_exit():
     strat, ledger, risk, logs = make()
     buy_a_025(strat, ledger, risk, logs)
-    # 时钟跳过 Q3 中段直接到 Q4（漏轮询）：Q4 开始兜底出场
+    # 时钟跳过 Q3 直接到 Q4（漏轮询）：Q4 开始兜底出场
     strat.clock.snap = in_game(4, 700)
     book(strat, ledger, risk, logs, T0 + 6600, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
     assert len(ledger.legs) == 0
@@ -178,12 +182,12 @@ def test_q4_fallback_exit():
     assert has(logs, "Q4 开始", "漏过")
 
 
-def test_q3_mid_exit_waits_for_bid():
+def test_q3_start_exit_waits_for_bid():
     strat, ledger, risk, logs = make()
     buy_a_025(strat, ledger, risk, logs)
-    strat.clock.snap = in_game(3, 360)
+    strat.clock.snap = in_game(3, 720)
     book(strat, ledger, risk, logs, T0 + 5400, a_bid=None, a_ask=0.06, b_bid=0.94, b_ask=0.95)
-    assert len(ledger.legs) == 1, "Q3 中段但无买价，应等下一 tick，不应丢腿"
+    assert len(ledger.legs) == 1, "Q3 开始但无买价，应等下一 tick，不应丢腿"
     assert has(logs, "无买价")
     book(strat, ledger, risk, logs, T0 + 5405, a_bid=0.05, a_ask=0.06, b_bid=0.94, b_ask=0.95)
     assert len(ledger.legs) == 0
@@ -201,11 +205,11 @@ def test_clock_missing_blocks_entry_but_not_tp():
     book(strat, ledger, risk, logs, T0 - 11 * 3600,
          a_bid=0.24, a_ask=0.25, b_bid=0.74, b_ask=0.75)
     assert len(ledger.legs) == 1
-    # 持仓后时钟又丢：0.50 落袋只看价格，照样走
+    # 持仓后时钟又丢：0.40 落袋只看价格，照样走
     strat.clock.snap = None
-    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.52, a_ask=0.53, b_bid=0.47, b_ask=0.48)
+    book(strat, ledger, risk, logs, T0 + 3600, a_bid=0.42, a_ask=0.43, b_bid=0.58, b_ask=0.59)
     assert len(ledger.legs) == 0
-    assert abs(ledger.trades[-1]["locked_pnl"] - 28.875) < 0.01
+    assert abs(ledger.trades[-1]["locked_pnl"] - 16.875) < 0.01
     assert has(logs, "落袋")
 
 

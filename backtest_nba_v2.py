@@ -1,14 +1,14 @@
-"""NBA 新策略回测：赛前 0.20-0.30 低吸（30U），盘中触 0.50 全卖，
-第三节中段（Q3 比赛时钟剩 6:00）前未触及则当时市价全卖。无止损。
+"""NBA 新策略回测：赛前 0.10-0.30 低吸（30U），盘中触 0.40 全卖，
+第三节开始前未触及则当时市价全卖。无止损。
 
-规则（用户 2026-11-23 确认，止盈 0.50 + Q3 中段出场）：
-- 每天扫当天所有比赛，只买赛前价格在 [0.20, 0.30]（含）那一边，其他不买。
-- 买入窗口：开赛前 1 天都可以（T0-24h ~ T0）；窗口内价格第一次进 [0.20, 0.30]
+规则（用户 2026-11-23 确认，买入 0.10-0.30 + 止盈 0.40 + Q3 开始出场）：
+- 每天扫当天所有比赛，只买赛前价格在 [0.10, 0.30]（含）那一边，其他不买。
+- 买入窗口：开赛前 1 天都可以（T0-24h ~ T0）；窗口内价格第一次进 [0.10, 0.30]
   就买入，30U 一腿，份数 = 30 / 买入价。每场最多一腿。
-- 买入后等开赛；盘中（T0 之后）第一次触及 0.50 就全部卖出（挂 0.50 限价，
-  maker，费 0）；到第三节中段（Q3 比赛时钟剩 6:00）还没触及，就在当时按市价
-  全部卖出（taker，体育费率 0.05）。
-- 无止损。Q3 中段时钟线缺失的极端情况用 Q4 开始兜底，再缺失才 fallback 到终场结算。
+- 买入后等开赛；盘中（T0 之后）第一次触及 0.40 就全部卖出（挂 0.40 限价，
+  maker，费 0）；到第三节开始还没触及，就在当时按市价全部卖出
+  （taker，体育费率 0.05）。
+- 无止损。Q3 开始时钟线缺失的极端情况用 Q4 开始兜底，再缺失才 fallback 到终场结算。
 
 费用（已核实口径）：taker 费 = 0.05 x 份数 x 价 x (1 - 价)，体育；
 maker（挂单）费 0；结算/赎回费 0。买入按市价买算 taker。
@@ -37,11 +37,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from quant_platform import nba_history
 
 SIZE_U = 30.0
-LO, HI = 0.20, 0.30
-TARGET = 0.50
+LO, HI = 0.10, 0.30
+TARGET = 0.40
 FEE_RATE = 0.05
 WINDOW_S = 24 * 3600
-EXIT_Q3_CLOCK_S = 360  # 出场：第三节中段 = Q3 比赛时钟剩 6:00
 
 
 def _price_at(pts, times, ts):
@@ -55,7 +54,7 @@ def _taker_fee(shares, price):
     return FEE_RATE * shares * price * (1.0 - price)
 
 
-def replay_game(g, target=TARGET):
+def replay_game(g, target=TARGET, lo=LO, hi=HI):
     """重放一场。返回 per-game dict（含 0 或 1 腿）。"""
     t0 = g["start_ts"]
     plays = g["plays"] or []
@@ -70,7 +69,7 @@ def replay_game(g, target=TARGET):
     st["pregame_coverage_h"] = round(cov_h, 1)
     st["full_24h"] = cov_h >= 24.0
 
-    # --- 入场：窗口内第一次进 [0.20, 0.30] 的点（A 优先于 B，同时间）---
+    # --- 入场：窗口内第一次进 [lo, hi] 的点（A 优先于 B，同时间）---
     pre = []
     for side, pts in (("A", pa), ("B", pb)):
         for p in pts:
@@ -79,7 +78,7 @@ def replay_game(g, target=TARGET):
     pre.sort(key=lambda x: (x[0], x[1]))
     entry = None
     for t, side, p in pre:
-        if LO <= p <= HI:
+        if lo <= p <= hi:
             entry = {"t": t, "side": side, "price": p,
                      "shares": SIZE_U / p, "lead_h": round((t0 - t) / 3600.0, 2)}
             break
@@ -93,13 +92,13 @@ def replay_game(g, target=TARGET):
     # --- 出场 ---
     held_pts = pa if entry["side"] == "A" else pb
     held_times = [p["t"] for p in held_pts]
-    # 出场时刻：第三节中段（plays 里第一条 period==3 且 clock_s<=360 的记录），
+    # 出场时刻：第三节开始（plays 里第一条 period==3 的记录），
     # 缺失时用 Q4 开始（第一条 period>=4 的记录）兜底
     exit_t, exit_kind = None, None
     for pl in plays:
-        per, cs = pl.get("period"), pl.get("clock_s")
-        if per == 3 and cs is not None and cs <= EXIT_Q3_CLOCK_S:
-            exit_t, exit_kind = pl["t"], "Q3_MID"
+        per = pl.get("period")
+        if per == 3:
+            exit_t, exit_kind = pl["t"], "Q3_START"
             break
         if per is not None and per >= 4:
             exit_t, exit_kind = pl["t"], "Q4_START"
@@ -159,15 +158,15 @@ def load_all_cached(data_dir):
     return records
 
 
-def summarize(per_game, target=TARGET):
+def summarize(per_game, target=TARGET, lo=LO, hi=HI):
     legs = [l for g in per_game for l in g["legs"]]
     tp = [l for l in legs if l["exit"] == "TP"]
-    q3 = [l for l in legs if l["exit"] == "Q3_MID"]
+    q3 = [l for l in legs if l["exit"] == "Q3_START"]
     q4 = [l for l in legs if l["exit"] == "Q4_START"]
     stl = [l for l in legs if l["exit"] == "SETTLE"]
     wins = [l for l in legs if l["pnl"] > 0]
     total = round(sum(l["pnl"] for l in legs), 2)
-    s = {"target": target, "exit_q3_clock_s": EXIT_Q3_CLOCK_S,
+    s = {"target": target, "lo": lo, "hi": hi,
          "games": len(per_game), "legs": len(legs),
          "games_with_entry": sum(1 for g in per_game if g["legs"]),
          "games_no_entry": sum(1 for g in per_game if not g["legs"]),
@@ -193,29 +192,29 @@ def summarize(per_game, target=TARGET):
          "total_fee_sell": round(sum(l["fee_sell"] for l in legs), 2),
          "granularity_mix": dict(Counter(g.get("granularity") for g in per_game)),
          "per_game": per_game,
-         "notes": (f"30U/腿，买入价 0.20-0.30，买入按市价算 taker 费 0.05；"
-                   f"触 {target} 按挂单卖费 0；Q3 中段（比赛时钟剩 6:00）市价卖算 taker 费；无止损。"
+         "notes": (f"30U/腿，买入价 {lo}-{hi}，买入按市价算 taker 费 0.05；"
+                   f"触 {target} 按挂单卖费 0；Q3 开始市价卖算 taker 费；无止损。"
                    "价格序列单价同时当 bid/ask，成交略高估；5 分钟粒度漏短暂触及，"
                    f"{target} 触及是下限。"
                    f"{sum(1 for g in per_game if g.get('full_24h'))} 场赛前 24h 全覆盖、"
                    f"{sum(1 for g in per_game if not g.get('full_24h'))} 场只有部分"
                    f"（最少 {min(g.get('pregame_coverage_h', 0) for g in per_game):.1f}h），"
-                   "入场腿数是下限。Q3 中段取 plays 第一条 period==3 且 clock<=360 的时间；"
+                   "入场腿数是下限。Q3 开始取 plays 第一条 period==3 的时间；"
                    "缺失时用 Q4 开始兜底。")}
     return s
 
 
 def print_report(s):
-    print(f"\n=== NBA 回测：赛前 0.20-0.30 低吸 30U，止盈 {s['target']}（{s['games']} 场）===")
+    print(f"\n=== NBA 回测：赛前 {s['lo']}-{s['hi']} 低吸 30U，止盈 {s['target']}（{s['games']} 场）===")
     print(f"入场：{s['legs']} 腿（{s['games_with_entry']} 场有入场 / {s['games_no_entry']} 场无入场 "
           f"{s['no_entry_reasons']}）；赛前 24h 全覆盖 {s['full_24h_games']} 场")
     print(f"触 {s['target']} 落袋：{s['tp_count']} 次，{s['tp_pnl']:+.2f}")
-    print(f"Q3 中段市价出：{s['q3_count']} 次，{s['q3_pnl']:+.2f}，"
+    print(f"Q3 开始市价出：{s['q3_count']} 次，{s['q3_pnl']:+.2f}，"
           f"出场价 {s['q3_exit_prices']}")
     if s['q4_count']:
-        print(f"Q4 开始市价出（Q3 中段时钟线缺失兜底）：{s['q4_count']} 次，"
+        print(f"Q4 开始市价出（Q3 开始时钟线缺失兜底）：{s['q4_count']} 次，"
               f"{s['q4_pnl']:+.2f}，出场价 {s['q4_exit_prices']}")
-    print(f"终场结算（无 Q3 中段也无 Q4 时钟线）：{s['settle_count']} 次，{s['settle_pnl']:+.2f}")
+    print(f"终场结算（无 Q3 开始也无 Q4 时钟线）：{s['settle_count']} 次，{s['settle_pnl']:+.2f}")
     print(f"胜率：{s['win_legs']}/{s['legs']} = {s['win_rate']}｜"
           f"总盈亏：{s['total_pnl']:+.2f}｜每场平均：{s['avg_pnl_per_game']:+.2f}｜"
           f"每腿平均：{s['avg_pnl_per_leg']}｜最大单腿赢：{s['max_win_leg']:+.2f}｜"
@@ -228,20 +227,23 @@ def print_report(s):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="NBA 新策略回测：赛前 0.20-0.30 低吸 30U")
+    ap = argparse.ArgumentParser(description="NBA 新策略回测：赛前 0.10-0.30 低吸 30U")
     ap.add_argument("--data-dir", default="nba_backtest_data", help="缓存目录")
     ap.add_argument("--output", default="nba_backtest_v2_results.json", help="结果 JSON 路径")
     ap.add_argument("--target", type=float, default=TARGET, help="止盈价（默认 0.40）")
+    ap.add_argument("--lo", type=float, default=LO, help="买入价下限（含，默认 0.10）")
+    ap.add_argument("--hi", type=float, default=HI, help="买入价上限（含，默认 0.30）")
     args = ap.parse_args()
     root = os.path.dirname(os.path.abspath(__file__))
     data_dir = args.data_dir if os.path.isabs(args.data_dir) else os.path.join(root, args.data_dir)
     records = load_all_cached(data_dir)
-    print(f"缓存重放：{len(records)} 场（{data_dir}），止盈 {args.target}")
+    print(f"缓存重放：{len(records)} 场（{data_dir}），买入价 {args.lo}-{args.hi}，止盈 {args.target}")
     if not records:
         print("没有可重放的比赛数据。")
         return 1
-    per_game = [replay_game(g, target=args.target) for g in records]
-    s = summarize(per_game, target=args.target)
+    per_game = [replay_game(g, target=args.target, lo=args.lo, hi=args.hi)
+                for g in records]
+    s = summarize(per_game, target=args.target, lo=args.lo, hi=args.hi)
     print_report(s)
     out_path = args.output if os.path.isabs(args.output) else os.path.join(root, args.output)
     with open(out_path, "w", encoding="utf-8") as f:
